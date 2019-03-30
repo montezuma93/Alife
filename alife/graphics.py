@@ -112,9 +112,14 @@ terr = {
                      [1,1]]),                       
     }
 
-def get_tree(n):
+def get_tree(kind_of_tree_key, n):
     ''' Load a plant '''
-    sheet = pygame.image.load('./img/trees_packed.png').convert_alpha()
+    if(kind_of_tree_key == 3):
+        sheet = pygame.image.load('./img/trees_packed.png').convert_alpha()
+    elif(kind_of_tree_key == 31):
+        sheet = pygame.image.load('./img/trees_packed_toxic.png').convert_alpha()
+    else:
+        sheet = pygame.image.load('./img/trees_packed_maybe_toxic.png').convert_alpha()
     image = sheet.subsurface(trees[n])
     return image
 
@@ -130,8 +135,8 @@ def build_image_png(pos,rad,ID):
         image = get_rock(random.choice(10))
     elif ID == 2:
         print("No such object type")
-    elif ID == 3:
-        image = get_tree(random.choice(len(trees)))
+    elif ID == 3 or ID == 31 or ID == 32:
+        image = get_tree(ID, random.choice(len(trees)))
     elif ID >= 4 and ID <= 11:
         image = pygame.image.load('./img/green_bug_m%d.png' % (ID-3)).convert_alpha()
     else:
