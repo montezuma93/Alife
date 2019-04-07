@@ -4,7 +4,7 @@ import sys
 sys.path.append("alife")
 
 # Default map
-map_file = "dat/maps/map_islands2.dat"
+map_file = "RANDOM_MAP"
 if len(sys.argv) > 1:
     map_file = sys.argv[1]
 
