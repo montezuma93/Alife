@@ -22,9 +22,58 @@ class DrawGroup(pygame.sprite.Group):
 def load_map(s):
     ''' load a map from a text file '''
     MAP = zeros((10,10),dtype=int)
-    if s is not None:
-        MAP = genfromtxt(s, delimiter = 1, dtype=str)
+    if s is "RANDOM_MAP":
+        MAP = create_random_txt_for_map()
+    elif s is not None and s is not "RANDOM_MAP":
+        MAP = genfromtxt(s, delimiter = 1, dtype=str)     
     return MAP[1:-1,1:-1]
+
+def create_random_txt_for_map():
+    import random
+    import numpy as np
+    possible_terrains = {}
+    possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-']}
+    possible_terrains['v'] = {'right': ['v', '&', '/'], 'bottom': ['~', '^', '+']}
+    possible_terrains['^'] = {'right': ['^', 'L', 'D'], 'bottom': [' ', 'v', '-']}
+    possible_terrains['['] = {'right': [']', ' '], 'bottom': ['[', '\\', 'D']}
+    possible_terrains[']'] = {'right': ['[', '+', '~'], 'bottom': [']', '/']}
+    possible_terrains['\\'] = {'right': ['&', '/', 'v'], 'bottom': ['+', '^']}
+    possible_terrains['/'] = {'right': ['\\', '~'], 'bottom': ['~', '^', 'L']}
+    possible_terrains['+'] = {'right': ['^', 'L', 'D'], 'bottom': ['[', '\\', 'D']}
+    possible_terrains['L'] = {'right': ['+', '~', '['], 'bottom': [']', '/', 'C']}
+    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\']}
+    possible_terrains['D'] = {'right': [' ','-', ']'], 'bottom': [' ', '-', 'v', ' ']}
+    possible_terrains['C'] = {'right': ['L','^', 'D'], 'bottom': ['&', '-', 'v', ' ']}
+    possible_terrains['-'] = {'right': ['/', 'v'], 'bottom': [']', '/']}
+    possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+']}
+    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+']
+    row_size = random.choice(range(10, 17, 2))
+    column_size = random.choice(range(20, 31, 2))
+    MAP = np.empty([row_size, column_size],  dtype='str')
+    for row in range(0, row_size):
+        for column in range(0, column_size):
+            left_choice = None
+            top_choice = None
+            '''Build the frame'''
+            if(column == 0 or column == column_size - 1):
+                    MAP[row, column] = '|'
+            if(row == 0 or row == row_size - 1):
+                MAP[row,column] = '-'
+            if((row == 0 or row == row_size-1) and (column == 0 or column == column_size - 1)):
+                MAP[row,column] = '+'
+            '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
+            if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
+                if row >= 3:
+                    top_choice = MAP[row -2, column]
+                if column >= 3:
+                    left_choice = MAP[row, column -2]
+                possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
+                possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
+                MAP[row, column] = random.choice(np.intersect1d(possible_right_terrain, possible_bottom_terrain))
+            '''Add dots arround terrain tiles'''
+            if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
+                MAP[row, column] = '.'
+    return MAP
 
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
