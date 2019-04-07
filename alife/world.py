@@ -177,11 +177,13 @@ class World:
                         if timer == 0:
                             timer = 0.001
                         elif timer < 0.2:
-                            print('double click -> changing plant kind')
+                            print('Double click -> Changing plant kind')
                             if self.PLANT_TO_USE == ID_PLANT:
-                                 self.PLANT_TO_USE = ID_PLANT_TOXIC
-                            elif self.PLANT_TO_USE == ID_PLANT_TOXIC:
-                                self.PLANT_TO_USE = ID_PLANT_MAYBE_TOXIC
+                                 self.PLANT_TO_USE = ID_PLANT_HARD_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_HARD_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_SOFT_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_SOFT_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_MEDICINE
                             else:
                                 self.PLANT_TO_USE = ID_PLANT
                             timer = 0
@@ -214,7 +216,6 @@ class World:
                 if timer >= 0.2:
                     Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
                     print("New Plant")
-                    print('timer reset')
                     timer = 0
 
             dt = clock.tick(60) /1000
