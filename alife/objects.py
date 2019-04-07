@@ -14,6 +14,9 @@ ID_VOID = 0
 ID_ROCK = 1
 ID_MISC = 2
 ID_PLANT = 3
+ID_PLANT_HARD_TOXIC = 31
+ID_PLANT_SOFT_TOXIC = 32
+ID_PLANT_MEDICINE = 33
 ID_ANIMAL = 4
 ID_OTHER = 5
 
@@ -39,6 +42,7 @@ def get_conf(filename='conf.yml',section='world'):
 
 cfg = get_conf(filename='conf.yml',section='objects')
 TERRAIN_DAMAGE = cfg['terrain_damage'] # Added factor when hitting a wall or landing on water
+TOXIC_DAMAGE = cfg['toxic_damage'] # Added a factor how toxic the soft toxic plant is
 BOUNCE_DAMAGE = cfg['bounce_damage']   # Multiplied factor when hitting a friend
 FLIGHT_SPEED = cfg['flight_speed']     # After this speed, a creature takes flight
 FLIGHT_BOOST = cfg['flight_boost']     # Speed is multiplied by this factor if in flight
@@ -123,11 +127,23 @@ class Thing(pygame.sprite.DirtySprite):
         '''
             Collision. A creature collides with me.
         '''
-        if self.ID == ID_PLANT and creature.ID >= ID_ANIMAL:
+        if ((self.ID == ID_PLANT or self.ID == ID_PLANT_HARD_TOXIC or self.ID == ID_PLANT_SOFT_TOXIC or self.ID == ID_PLANT_MEDICINE)
+         and creature.ID >= ID_ANIMAL) :
             # The creature can eat me (one bite at a time, relative to its own size)
             bite = random.rand() * creature.energy_limit * BITE_RATIO
-            creature.energy = creature.energy + bite 
             self.energy = self.energy - bite
+            # Creature can eat me and will get energy
+            if self.ID == ID_PLANT:
+                creature.energy = creature.energy + bite
+            # Creature can eat me. But will die, because plant is hard toxic.
+            elif self.ID == ID_PLANT_HARD_TOXIC:
+                creature.energy = 0
+            # Creature can eat me. But will die slowly (lose energy per time), because plant is soft toxic.
+            elif self.ID == ID_PLANT_SOFT_TOXIC :
+                creature.energy = creature.energy * TOXIC_DAMAGE
+                creature.intoxicated = True
+            elif self.ID == ID_PLANT_MEDICINE :
+                creature.intoxicated = False
 
         elif self.ID == ID_ROCK:
             # I am a rock
@@ -167,6 +183,7 @@ class Creature(Thing):
         Thing.__init__(self, pos, mass = energy, ID = ID)
         self.images = build_image_bank(self.image)   # this is a moving sprite; load images for each angle
         self.energy_limit = energy
+        self.intoxicated = False
         self.energy = energy * INIT_ENERGY
         self.selected = None
         # Attributes
@@ -295,6 +312,9 @@ class Creature(Thing):
         self.pa2 = rotate(self.unitv * self.radius*3,-0.3) # antenna right pos
         # Now move (this burns energy according to size and speed and the angle of turn)
         self.energy = self.energy - burn(angle, speed, self.radius)
+        # Lose energy, if unit is intoxicated
+        if self.intoxicated:
+            self.energy = self.energy * TOXIC_DAMAGE
         self.pos = self.pos + self.unitv * self.speed
         self.speed = abs(self.speed)
         # Divide (if we are DIVIDE_LIMIT times over the limit)

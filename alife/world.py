@@ -94,6 +94,7 @@ class World:
         self.N_COLS = map_codes.shape[1]
         self.WIDTH = self.N_COLS * TILE_SIZE
         self.HEIGHT = self.N_ROWS * TILE_SIZE
+        self.PLANT_TO_USE = ID_PLANT
         SCREEN = array([self.WIDTH, self.HEIGHT])
 
         step = 0
@@ -136,7 +137,7 @@ class World:
         for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
             Thing(self.random_position(), mass=100+random.rand()*1000, ID=ID_ROCK)
         for i in range(int(self.N_ROWS*FACTOR/5*self.N_COLS)):
-            Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
+            Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
 
         # Get a list of the agents we may deploy 
         agents = get_conf(section='bugs').values()
@@ -155,9 +156,11 @@ class World:
         GRAPHICS_ON = True
         GRID_ON = False
         self.FPS = FPS
+        clock = pygame.time.Clock()
+        timer = 0
+        dt = 0
         while True:
             self.clock.tick(self.FPS)
-
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
@@ -220,8 +223,19 @@ class World:
                         print("New Rock")
                         Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_ROCK)
                     elif event.key == pygame.K_3:
-                        print("New Plant")
-                        Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
+                        if timer == 0:
+                            timer = 0.001
+                        elif timer < 0.25:
+                            print('Double click -> Changing plant kind')
+                            if self.PLANT_TO_USE == ID_PLANT:
+                                 self.PLANT_TO_USE = ID_PLANT_HARD_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_HARD_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_SOFT_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_SOFT_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_MEDICINE
+                            else:
+                                self.PLANT_TO_USE = ID_PLANT
+                            timer = 0
                     elif event.key == pygame.K_4 and len(agents) >= (4-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[4-4], ID = 4)
@@ -245,13 +259,21 @@ class World:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     print("Click")
                     sel_obj = self.quick_collision(pygame.mouse.get_pos())
+            
+            if timer != 0:
+                timer += dt
+                if timer >= 0.25:
+                    Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
+                    print("New Plant")
+                    timer = 0
 
+            dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
             if step % growth_rate == 0:
                 p = self.random_position()
                 if p is not None and len(self.plants) < 1000:
-                    Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
+                    Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
                 banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
                 print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
 

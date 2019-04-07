@@ -6,6 +6,7 @@ world:
     growth_rate : 200     # growth rate of plants (number per tick)
     max_plant_size : 1500
 objects:
+    toxic_damage : 0.995
     terrain_damage : 1.5
     bounce_damage : 1.
     flight_speed : 5.0
