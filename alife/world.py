@@ -176,7 +176,7 @@ class World:
                     elif event.key == pygame.K_3:
                         if timer == 0:
                             timer = 0.001
-                        elif timer < 0.2:
+                        elif timer < 0.25:
                             print('Double click -> Changing plant kind')
                             if self.PLANT_TO_USE == ID_PLANT:
                                  self.PLANT_TO_USE = ID_PLANT_HARD_TOXIC
@@ -213,7 +213,7 @@ class World:
             
             if timer != 0:
                 timer += dt
-                if timer >= 0.2:
+                if timer >= 0.25:
                     Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
                     print("New Plant")
                     timer = 0
