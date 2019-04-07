@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
 import pygame
+import random
+import numpy as np
 
 from graphics import *
 from objects import *
@@ -29,8 +31,6 @@ def load_map(s):
     return MAP[1:-1,1:-1]
 
 def create_random_txt_for_map():
-    import random
-    import numpy as np
     possible_terrains = {}
     possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-']}
     possible_terrains['v'] = {'right': ['v', '&', '/'], 'bottom': ['~', '^', '+']}
