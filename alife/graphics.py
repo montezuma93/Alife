@@ -77,12 +77,18 @@ land = {
         'D' : [(3,7)],                                   # top left concave 
         'C' : [(2,3)],                                   # top right concave
         '-' : [(2,7)],                                   # bottom right concave
-        '~' : [(7,7)],                                   # water
+        '%' : [(6,7)],                                   # top left and right bottom is coast
+        'x' : [(7,7)],                                   # top right and left bottom is coast
+        '~' : [(6,6)],                                   # water
     }
 
 terr = {
         # Denotes the collision quaters of each tile given its character code (since one picture tile covers 4 game tiles)
         ' ' : array([[0,0],
+                     [0,0]]),
+        'x' : array([[0,0],
+                     [0,0]]),
+        '%' : array([[0,0],
                      [0,0]]),
         'v' : array([[0,0],
                      [1,1]]), 
@@ -107,7 +113,7 @@ terr = {
         '&' : array([[0,0],     # <-- bottom left is soft
                      [0,0]]),                       
         '-' : array([[0,0],     # <-- bottom right is soft
-                     [0,0]]),    
+                     [0,0]]),   
         '~' : array([[1,1],
                      [1,1]]),                       
     }

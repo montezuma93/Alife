@@ -3,6 +3,7 @@
 import pygame
 import random
 import numpy as np
+from functools import reduce
 
 from graphics import *
 from objects import *
@@ -31,48 +32,87 @@ def load_map(s):
     return MAP[1:-1,1:-1]
 
 def create_random_txt_for_map():
+    '''Construct that saves all possible tiles and its neighbours, can be extended and adjusted'''
     possible_terrains = {}
-    possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-']}
-    possible_terrains['v'] = {'right': ['v', '&', '/'], 'bottom': ['~', '^', '+']}
-    possible_terrains['^'] = {'right': ['^', 'L', 'D'], 'bottom': [' ', 'v', '-']}
-    possible_terrains['['] = {'right': [']', ' '], 'bottom': ['[', '\\', 'D']}
-    possible_terrains[']'] = {'right': ['[', '+', '~'], 'bottom': [']', '/']}
-    possible_terrains['\\'] = {'right': ['&', '/', 'v'], 'bottom': ['+', '^']}
-    possible_terrains['/'] = {'right': ['\\', '~'], 'bottom': ['~', '^', 'L']}
-    possible_terrains['+'] = {'right': ['^', 'L', 'D'], 'bottom': ['[', '\\', 'D']}
-    possible_terrains['L'] = {'right': ['+', '~', '['], 'bottom': [']', '/', 'C']}
-    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\']}
-    possible_terrains['D'] = {'right': [' ','-', ']'], 'bottom': [' ', '-', 'v', ' ']}
-    possible_terrains['C'] = {'right': ['L','^', 'D'], 'bottom': ['&', '-', 'v', ' ']}
-    possible_terrains['-'] = {'right': ['/', 'v'], 'bottom': [']', '/']}
-    possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+']}
-    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+']
-    row_size = random.choice(range(10, 17, 2))
-    column_size = random.choice(range(20, 31, 2))
+    possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-', '&'], 'left': [' ', '[', 'D', '&', '\\'], 'top': [' ', '^', 'D', 'C']}
+    possible_terrains['v'] = {'right': ['v', '&', '/', 'x'], 'bottom': ['~', '^', '+', 'L'], 'left': ['v', '-', '\\', '%'], 'top': [' ', '^', '+', 'L', 'C', 'D']}
+    possible_terrains['^'] = {'right': ['^', 'L', 'D', '%'], 'bottom': [' ', 'v', '-', '&'], 'left': ['^', '+', 'C', 'x'], 'top': ['~', 'v', '\\', '/']}
+    possible_terrains['['] = {'right': [']', ' ', '-', 'C'], 'bottom': ['[', '\\', 'D', '%'], 'left': [']', '~', 'L', '/'], 'top': ['[', '&', 'x', '+']}
+    possible_terrains[']'] = {'right': ['[', '+', '~', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['[', 'L', ' ', '&', 'D'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['\\'] = {'right': ['&', '/', 'v', 'x'], 'bottom': ['+', '^', '~', 'L'], 'left': ['/', 'L', '~', ']'], 'top': ['+', '&', '[', 'x']}
+    possible_terrains['/'] = {'right': ['\\', '~', '[', '+'], 'bottom': ['~', '^', 'L', '+'], 'left': ['\\', '-', 'v', '%'], 'top': ['-', 'L', ']', '\\', '%']}
+    possible_terrains['+'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['L', ']', '~', '/'], 'top': ['~', '\\', '/', 'v'] }
+    possible_terrains['L'] = {'right': ['+', '~', '[', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['+', 'C', '^', 'x'], 'top': ['~', '\\', '/', 'v']}
+    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\', '%'], 'left': ['-', 'v', '\\', '%'], 'top': [' ', '^', 'D', 'C']}
+    possible_terrains['D'] = {'right': [' ','-', ']', 'C'], 'bottom': [' ', '-', 'v', ' ', '&'], 'left': ['C', '^', '+', 'x'], 'top': ['&', '[', '+', 'x']}
+    possible_terrains['C'] = {'right': ['L','^', 'D', '%'], 'bottom': ['&', '-', 'v', ' '], 'left': ['D', ' ', '&', '['], 'top': ['-', ']', 'L', '%']}
+    possible_terrains['-'] = {'right': ['/', 'v', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['&', 'D', ' ', '['], 'top': ['D', ' ', 'C', '^']}
+    possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+'], 'left': [']', '/', 'L', '~'], 'top': ['~','v', '\\', '/']}
+    possible_terrains['x'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['v', '\\', '-', '%'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['%'] = {'right': ['v', '/', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['^', '+', 'C', 'x'], 'top': ['[', '+', '&', 'x']}
+    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+', 'x', '%']
+    
+    '''Init Map'''
+    row_size = 16
+    column_size = 30
     MAP = np.empty([row_size, column_size],  dtype='str')
-    for row in range(0, row_size):
-        for column in range(0, column_size):
-            left_choice = None
-            top_choice = None
-            '''Build the frame'''
-            if(column == 0 or column == column_size - 1):
-                    MAP[row, column] = '|'
-            if(row == 0 or row == row_size - 1):
-                MAP[row,column] = '-'
-            if((row == 0 or row == row_size-1) and (column == 0 or column == column_size - 1)):
-                MAP[row,column] = '+'
-            '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
-            if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
-                if row >= 3:
-                    top_choice = MAP[row -2, column]
-                if column >= 3:
-                    left_choice = MAP[row, column -2]
-                possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
-                possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
-                MAP[row, column] = random.choice(np.intersect1d(possible_right_terrain, possible_bottom_terrain))
-            '''Add dots arround terrain tiles'''
-            if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
-                MAP[row, column] = '.'
+
+    '''Go through the Map and set tiles'''
+    row = 0
+    column = 0
+    while row < row_size -1 or column < column_size - 1:
+        need_restart = False
+        left_choice = None
+        top_choice = None
+        first_row_choice = None
+        first_column_choice = None
+
+        '''Build the frame'''
+        if(column == 0 or column == column_size - 1):
+                MAP[row, column] = '|'
+        if(row == 0 or row == row_size - 1):
+            MAP[row,column] = '-'
+        if((row == 0 or row == row_size-1) and (column == 0 or column == column_size - 1)):
+            MAP[row,column] = '+'
+
+        '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
+        if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
+            '''Last row need to fit first row in order to let the bugs walk through'''
+            if row == row_size - 3:
+                first_row_choice = MAP[1, column];
+            if row >= 3:
+                top_choice = MAP[row - 2, column]
+            '''Last column need to fit first column in order to let the bugs walk through'''
+            if column == column_size - 3:
+                first_column_choice = MAP[row, 1]
+            if column >= 3:
+                left_choice = MAP[row, column -2]
+            possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
+            possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
+            possible_last_row_terrain = possible_terrains[first_row_choice]['top'] if first_row_choice is not None else possible_terrains['ALL']
+            possible_last_column_terrain = possible_terrains[first_column_choice]['left'] if first_column_choice is not None else possible_terrains['ALL']
+            intersected_list = reduce(np.intersect1d, (possible_right_terrain, possible_bottom_terrain, possible_last_row_terrain, possible_last_column_terrain))
+            '''If no possible tile was found, start again, otherwise choose a tile'''
+            if len(intersected_list) > 0:
+                MAP[row, column] = random.choice(intersected_list)
+            else:
+                need_restart = True
+        
+        '''Add dots arround terrain tiles'''
+        if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
+            MAP[row, column] = '.'
+        
+        '''Calculate the next row, column to set a tile for. If need restart, init map again and start again'''
+        if need_restart:
+            row = 0
+            column = 0
+            MAP = np.empty([row_size, column_size],  dtype='str')
+        else:
+            if column < column_size -1  and row <= row_size -1 :
+                column = column + 1
+            elif column == column_size -1 and row <= row_size -1:
+                column = 0
+                row = row + 1
     return MAP
 
 def get_conf(filename='conf.yml',section='world'):
