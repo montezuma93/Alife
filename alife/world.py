@@ -34,24 +34,24 @@ def load_map(s):
 def create_random_txt_for_map():
     possible_terrains = {}
     possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-', '&'], 'left': [' ', '[', 'D', '&', '\\'], 'top': [' ', '^', 'D', 'C']}
-    possible_terrains['v'] = {'right': ['v', '&', '/'], 'bottom': ['~', '^', '+', 'L'], 'left': ['v', '-', '\\'], 'top': [' ', '^', '+', 'L', 'C']}
-    possible_terrains['^'] = {'right': ['^', 'L', 'D'], 'bottom': [' ', 'v', '-', '&'], 'left': ['^', '+', 'C'], 'top': ['~', 'v', '\\', '/']}
-    possible_terrains['['] = {'right': [']', ' ', '-', 'C'], 'bottom': ['[', '\\', 'D'], 'left': [']', '~', 'L', '/'], 'top': ['[', '&']}
-    possible_terrains[']'] = {'right': ['[', '+', '~', '\\'], 'bottom': [']', '/', 'C'], 'left': ['[', 'L', ' ', '&', 'D'], 'top': [']', 'L', '-']}
-    possible_terrains['\\'] = {'right': ['&', '/', 'v'], 'bottom': ['+', '^', '~', 'L'], 'left': ['/', 'L', '~', ']'], 'top': ['+', '&', '[']}
-    possible_terrains['/'] = {'right': ['\\', '~', '[', '+'], 'bottom': ['~', '^', 'L'], 'left': ['\\', '-', 'v'], 'top': ['-', 'L', ']', '\\']}
-    possible_terrains['+'] = {'right': ['^', 'L', 'D'], 'bottom': ['[', '\\', 'D'], 'left': ['L', ']', '~', '/'], 'top': ['~', '\\', '/', 'v'] }
-    possible_terrains['L'] = {'right': ['+', '~', '[', '\\'], 'bottom': [']', '/', 'C'], 'left': ['+', 'C', '^'], 'top': ['~', '\\', '/', 'v']}
-    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\'], 'left': ['-', 'v', '\\'], 'top': [' ', '^', 'D', 'C']}
-    possible_terrains['D'] = {'right': [' ','-', ']', 'C'], 'bottom': [' ', '-', 'v', ' ', '&'], 'left': ['C', '^', '+'], 'top': ['&', '[', '+']}
-    possible_terrains['C'] = {'right': ['L','^', 'D'], 'bottom': ['&', '-', 'v', ' '], 'left': ['C', ' ', '&', '['], 'top': ['-', ']', 'L']}
-    possible_terrains['-'] = {'right': ['/', 'v', '&'], 'bottom': [']', '/', 'C'], 'left': ['&', 'D', ' ', '['], 'top': ['D', ' ', 'C', '^']}
+    possible_terrains['v'] = {'right': ['v', '&', '/', 'x'], 'bottom': ['~', '^', '+', 'L'], 'left': ['v', '-', '\\', '%'], 'top': [' ', '^', '+', 'L', 'C', 'D']}
+    possible_terrains['^'] = {'right': ['^', 'L', 'D', '%'], 'bottom': [' ', 'v', '-', '&'], 'left': ['^', '+', 'C', 'x'], 'top': ['~', 'v', '\\', '/']}
+    possible_terrains['['] = {'right': [']', ' ', '-', 'C'], 'bottom': ['[', '\\', 'D', '%'], 'left': [']', '~', 'L', '/'], 'top': ['[', '&', 'x', '+']}
+    possible_terrains[']'] = {'right': ['[', '+', '~', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['[', 'L', ' ', '&', 'D'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['\\'] = {'right': ['&', '/', 'v', 'x'], 'bottom': ['+', '^', '~', 'L'], 'left': ['/', 'L', '~', ']'], 'top': ['+', '&', '[', 'x']}
+    possible_terrains['/'] = {'right': ['\\', '~', '[', '+'], 'bottom': ['~', '^', 'L', '+'], 'left': ['\\', '-', 'v', '%'], 'top': ['-', 'L', ']', '\\', '%']}
+    possible_terrains['+'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['L', ']', '~', '/'], 'top': ['~', '\\', '/', 'v'] }
+    possible_terrains['L'] = {'right': ['+', '~', '[', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['+', 'C', '^', 'x'], 'top': ['~', '\\', '/', 'v']}
+    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\', '%'], 'left': ['-', 'v', '\\', '%'], 'top': [' ', '^', 'D', 'C']}
+    possible_terrains['D'] = {'right': [' ','-', ']', 'C'], 'bottom': [' ', '-', 'v', ' ', '&'], 'left': ['C', '^', '+', 'x'], 'top': ['&', '[', '+', 'x']}
+    possible_terrains['C'] = {'right': ['L','^', 'D', '%'], 'bottom': ['&', '-', 'v', ' '], 'left': ['D', ' ', '&', '['], 'top': ['-', ']', 'L', '%']}
+    possible_terrains['-'] = {'right': ['/', 'v', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['&', 'D', ' ', '['], 'top': ['D', ' ', 'C', '^']}
     possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+'], 'left': [']', '/', 'L', '~'], 'top': ['~','v', '\\', '/']}
-    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+']
-    row_size = random.choice(range(10, 17, 2))
-    column_size = random.choice(range(20, 31, 2))
-    row_size = 12
-    column_size = 12
+    possible_terrains['x'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['v', '\\', '-', '%'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['%'] = {'right': ['v', '/', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['^', '+', 'C', 'x'], 'top': ['[', '+', '&', 'x']}
+    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+', 'x', '%']
+    row_size = 16
+    column_size = 30
     MAP = np.empty([row_size, column_size],  dtype='str')
     for row in range(0, row_size):
         for column in range(0, column_size):
