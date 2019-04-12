@@ -142,9 +142,11 @@ def build_image_png(pos,rad,ID):
     if ID == 1:
         image = get_rock(random.choice(10))
     elif ID == 2:
-        print("No such object type")
+        image = pygame.image.load('./img/tree_trunk.png').convert_alpha()
     elif ID == 3 or ID == 31 or ID == 32 or ID == 33:
         image = get_tree(ID, random.choice(len(trees)))
+    elif ID == 9:
+         image = pygame.image.load('./img/spider.png').convert_alpha()
     elif ID >= 4 and ID <= 11:
         image = pygame.image.load('./img/green_bug_m%d.png' % (ID-3)).convert_alpha()
     else:

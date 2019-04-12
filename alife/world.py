@@ -13,6 +13,12 @@ import joblib, glob, time, datetime
 # For loading config
 import yaml
 
+def get_conf(filename='conf.yml',section='world'):
+    return yaml.load(open(filename))[section]
+
+cfg = get_conf(filename='conf.yml',section='objects')
+MONSTER_INIT_ENERGY = cfg['monster_init_energy'] # Added factor when hitting a wall or landing on water
+
 # Parameters
 TILE_SIZE = 64               # tile size (width and height, in pixels)
 MAX_GRID_DETECTION = 100     # maximum number of objects that can be detected at once
@@ -262,6 +268,9 @@ class World:
                     elif event.key == pygame.K_1:
                         print("New Rock")
                         Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_ROCK)
+                    elif event.key == pygame.K_2:
+                        print("New Tree Trunk")
+                        Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_TREE_TRUNK)
                     elif event.key == pygame.K_3:
                         if timer == 0:
                             timer = 0.001
@@ -291,6 +300,9 @@ class World:
                     elif event.key == pygame.K_8 and len(agents) >= (8-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[8-4], ID = 8)
+                    elif event.key == pygame.K_9:
+                        print("New Monster")
+                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY,  ID = 9)
                     elif event.key == pygame.K_h:
                         print("=== HELP ===")
                         dic = ["VOID", "ROCK", "MISC", "BUG1", "BUG2", "BUG3"]
