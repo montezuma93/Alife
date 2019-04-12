@@ -53,8 +53,10 @@ def create_random_txt_for_map():
     row_size = 16
     column_size = 30
     MAP = np.empty([row_size, column_size],  dtype='str')
-    for row in range(0, row_size):
-        for column in range(0, column_size):
+    row = 0
+    column = 0
+    while row < row_size -1 or column < column_size - 1:
+            need_restart = False
             left_choice = None
             top_choice = None
             first_row_choice = None
@@ -69,40 +71,38 @@ def create_random_txt_for_map():
             '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
             if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
                 '''Last row need to fit first row in order to let the bugs walk through'''
-                print('row', row)
-                print('column', column)
                 if row == row_size - 3:
-                    print('here1')
                     first_row_choice = MAP[1, column];
                 if row >= 3:
-                    print('here2')
                     top_choice = MAP[row - 2, column]
                 '''Last column need to fit first column in order to let the bugs walk through'''
                 if column == column_size - 3:
-                    print('here3')
                     first_column_choice = MAP[row, 1]
                 if column >= 3:
-                    print('here4')
                     left_choice = MAP[row, column -2]
                 possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
                 possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
                 possible_last_row_terrain = possible_terrains[first_row_choice]['top'] if first_row_choice is not None else possible_terrains['ALL']
                 possible_last_column_terrain = possible_terrains[first_column_choice]['left'] if first_column_choice is not None else possible_terrains['ALL']
-                print(MAP)
-                print('left' , left_choice)
-                print('top' , top_choice)
-                print('firstrow' , first_row_choice)
-                print('lastrow' , first_column_choice)
-                print('possible_right_terrain', possible_right_terrain);
-                print('possible_bottom_terrain', possible_bottom_terrain);
-                print('possible_last_row_terrain', possible_last_row_terrain);
-                print('possible_last_column_terrain', possible_last_column_terrain);
                 intersected_list = reduce(np.intersect1d, (possible_right_terrain, possible_bottom_terrain, possible_last_row_terrain, possible_last_column_terrain))
-                MAP[row, column] = random.choice(intersected_list)
-
+                if len(intersected_list) > 0:
+                    MAP[row, column] = random.choice(intersected_list)
+                else:
+                    need_restart = True
             '''Add dots arround terrain tiles'''
             if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
                 MAP[row, column] = '.'
+            if need_restart:
+                row = 0
+                column = 0
+                MAP = np.empty([row_size, column_size],  dtype='str')
+                print('restarted')
+            else:
+                if column < column_size -1  and row <= row_size -1 :
+                    column = column + 1
+                elif column == column_size -1 and row <= row_size -1:
+                    column = 0
+                    row = row + 1
     print(MAP)
     return MAP
 
