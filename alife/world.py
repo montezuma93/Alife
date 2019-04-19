@@ -16,6 +16,7 @@ import yaml
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
 
+CONFIG_FILENAME='conf.yml'
 cfg = get_conf(filename='conf.yml',section='objects')
 MONSTER_INIT_ENERGY = cfg['monster_init_energy'] # Added factor when hitting a wall or landing on water
 
@@ -129,7 +130,7 @@ class World:
         This is the world (environment) that objects exist in. 
     """
 
-    def __init__(self,fname=None,init_sprites=2):
+    def __init__(self,fname=None,init_sprites=0):
 
         # Load the configuration
         cfg = get_conf(section='world')
@@ -144,7 +145,6 @@ class World:
         SCREEN = array([self.WIDTH, self.HEIGHT])
 
         step = 0
-        growth_rate = cfg['growth_rate']
 
         ## GRID REGISTER and GRID COUNT 
         self.register = [[[None for l in range(MAX_GRID_DETECTION)] for k in range(self.N_ROWS)] for j in range(self.N_COLS)]
@@ -187,6 +187,7 @@ class World:
 
         # Get a list of the agents we may deploy 
         agents = get_conf(section='bugs').values()
+        print(agents)
 
         # Some animate creatures
         #for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
@@ -197,10 +198,10 @@ class World:
 
         self.allSprites.clear(self.screen, background)
 
+        ### Adjust cf settings
+        self.adjust_settings()
         ### Add plants and rocks and adjust params for Things and Livings based on random
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
-        ### Adjust cf settings
-        # TODO
 
         ## MAIN LOOP ##
         sel_obj = None 
@@ -265,11 +266,21 @@ class World:
                         self.FPS = self.FPS - 50
                         print("FPS: %d" % self.FPS)
                     elif event.key == pygame.K_COMMA:
-                        growth_rate = growth_rate + 100
-                        print("Lower energy influx (new plant every %d ticks)" % growth_rate)
+                        with open(CONFIG_FILENAME) as file:
+                            config_file = yaml.load(file)
+                            growth_rate = config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)]
+                            config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)] = growth_rate + 100             
+                            with open(CONFIG_FILENAME, "w") as file:
+                                yaml.dump(config_file, file)
+                            print("Lower energy influx (new plant every %d ticks)" % (growth_rate + 100))
                     elif event.key == pygame.K_PERIOD:
-                        growth_rate = max(growth_rate - 100,10)
-                        print("Higher energy influx (new plant every %d ticks)" % growth_rate)
+                        with open(CONFIG_FILENAME) as file:
+                            config_file = yaml.load(file)
+                            growth_rate = config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)]
+                            config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)] = growth_rate - 100.10             
+                            with open(CONFIG_FILENAME, "w") as file:
+                                yaml.dump(config_file, file)
+                        print("Higher energy influx (new plant every %d ticks)" % (growth_rate - 100.10))
                     elif event.key == pygame.K_1:
                         print("New Rock")
                         Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_ROCK)
@@ -327,12 +338,13 @@ class World:
             dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
-            if step % growth_rate == 0:
-                p = self.random_position()
-                if p is not None and len(self.plants) < 1000:
-                    Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
-                banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
-                print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
+            for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE):
+                if step % get_conf(section='world')['growth_rate']['ID_' + str(plant_type)] == 0:
+                    p = self.random_position()
+                    if p is not None and len(self.plants) < 1000:
+                        Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=plant_type)
+                    banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
+                    print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
 
             # Reset reg-counts and Register all sprites
             self.regcount = zeros((self.N_COLS,self.N_ROWS),int) 
@@ -373,16 +385,25 @@ class World:
         #Add plants and rocks
         for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK):
             for i in range(random.randint(0,9)):
-                amount = random.randint(0, 9)
-                for j in range(amount):
-                    Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
+                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
         #Add monster
         for i in range(random.randint(0,9)):
-            amount = random.randint(0, 9)
-            for j in range(amount):
-                Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
+            Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
         
-                
+    def adjust_settings(self, filename='conf.yml'):
+        with open(filename) as file:
+            config_file = yaml.load(file)
+            cfg_world = config_file['world']
+            cfg_objects = config_file['objects']
+            for growth_rate in cfg_world['growth_rate']:
+                cfg_world['growth_rate'][growth_rate] = random.randint(1, 1000)
+            cfg_objects['toxic_damage'] = random.uniform(0, 0.999)
+            cfg_objects['monster_attack_damage_multiplier'] = random.randint(0, 100)
+            with open(filename, "w") as file:
+                yaml.dump(config_file, file)
+        with open(filename) as file:
+            config_file = yaml.load(file)
+
 
     def random_position(self, on_empty=False):
         ''' Find a random position somewhere on the screen over land tiles

@@ -3,7 +3,11 @@ world:
     tile_size: 64         # the length (and width) of a tile in pixels
     max_grid_objects: 100 # maximum objects that can be detected at once
     fps : 60              # frames per second
-    growth_rate : 200     # growth rate of plants (number per tick)
+    growth_rate :         # growth rate of plants (number per tick)
+        id_3: 200
+        id_31: 200
+        id_32: 200
+        id_33: 200
     max_plant_size : 1500
 objects:
     toxic_damage : 0.995
