@@ -3,9 +3,14 @@ world:
     tile_size: 64         # the length (and width) of a tile in pixels
     max_grid_objects: 100 # maximum objects that can be detected at once
     fps : 60              # frames per second
-    growth_rate : 200     # growth rate of plants (number per tick)
+    growth_rate :         # growth rate of plants (number per tick)
+        id_3: 200
+        id_31: 200
+        id_32: 200
+        id_33: 200
     max_plant_size : 1500
 objects:
+    toxic_damage : 0.995
     terrain_damage : 1.5
     bounce_damage : 1.
     flight_speed : 5.0
@@ -16,6 +21,9 @@ objects:
     init_energy : 1.0
     touch_threshold : 0.9    # after this level is considered touch
     divide_limit : 2.0
+    monster_init_energy: 1000
+    monster_attack_damage_multiplier: 5
 bugs: # todo, include 1 and 2 for rock, plant, etc. 
     1 : alife.agents.evolution/SimpleEvolver/{'H':10}
     2 : alife.agents.evolution/SimpleEvolver/{'H':-10}
+    3 : alife.agents.evolution/SimpleEvolver/{'H':10}

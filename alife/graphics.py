@@ -77,13 +77,19 @@ land = {
         'D' : [(3,7)],                                   # top left concave 
         'C' : [(2,3)],                                   # top right concave
         '-' : [(2,7)],                                   # bottom right concave
-        '~' : [(7,7)],                                   # water
+        '%' : [(6,7)],                                   # top left and right bottom is coast
+        'x' : [(7,7)],                                   # top right and left bottom is coast
+        '~' : [(6,6)],                                   # water
     }
 
 terr = {
         # Denotes the collision quaters of each tile given its character code (since one picture tile covers 4 game tiles)
         ' ' : array([[0,0],
                      [0,0]]),
+        'x' : array([[0,1],
+                     [1,0]]),
+        '%' : array([[1,0],
+                     [0,1]]),
         'v' : array([[0,0],
                      [1,1]]), 
         '[' : array([[1,0],
@@ -107,14 +113,21 @@ terr = {
         '&' : array([[0,0],     # <-- bottom left is soft
                      [0,0]]),                       
         '-' : array([[0,0],     # <-- bottom right is soft
-                     [0,0]]),    
+                     [0,0]]),   
         '~' : array([[1,1],
                      [1,1]]),                       
     }
 
-def get_tree(n):
+def get_tree(kind_of_tree_key, n):
     ''' Load a plant '''
-    sheet = pygame.image.load('./img/trees_packed.png').convert_alpha()
+    if(kind_of_tree_key == 3):
+        sheet = pygame.image.load('./img/trees_packed.png').convert_alpha()
+    elif(kind_of_tree_key == 31):
+        sheet = pygame.image.load('./img/trees_packed_hard_toxic.png').convert_alpha()
+    elif(kind_of_tree_key == 32):
+        sheet = pygame.image.load('./img/trees_packed_soft_toxic.png').convert_alpha()
+    else:
+        sheet = pygame.image.load('./img/trees_packed_medicine.png').convert_alpha()
     image = sheet.subsurface(trees[n])
     return image
 
@@ -129,9 +142,11 @@ def build_image_png(pos,rad,ID):
     if ID == 1:
         image = get_rock(random.choice(10))
     elif ID == 2:
-        print("No such object type")
-    elif ID == 3:
-        image = get_tree(random.choice(len(trees)))
+        image = pygame.image.load('./img/tree_trunk.png').convert_alpha()
+    elif ID == 3 or ID == 31 or ID == 32 or ID == 33:
+        image = get_tree(ID, random.choice(len(trees)))
+    elif ID == 9:
+         image = pygame.image.load('./img/spider.png').convert_alpha()
     elif ID >= 4 and ID <= 11:
         image = pygame.image.load('./img/green_bug_m%d.png' % (ID-3)).convert_alpha()
     else:

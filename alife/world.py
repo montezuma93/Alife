@@ -3,6 +3,7 @@
 import pygame
 import random
 import numpy as np
+from functools import reduce
 
 from graphics import *
 from objects import *
@@ -11,6 +12,13 @@ from objects import *
 import joblib, glob, time, datetime
 # For loading config
 import yaml
+
+def get_conf(filename='conf.yml',section='world'):
+    return yaml.load(open(filename))[section]
+
+CONFIG_FILENAME='conf.yml'
+cfg = get_conf(filename='conf.yml',section='objects')
+MONSTER_INIT_ENERGY = cfg['monster_init_energy'] # Added factor when hitting a wall or landing on water
 
 # Parameters
 TILE_SIZE = 64               # tile size (width and height, in pixels)
@@ -31,48 +39,87 @@ def load_map(s):
     return MAP[1:-1,1:-1]
 
 def create_random_txt_for_map():
+    '''Construct that saves all possible tiles and its neighbours, can be extended and adjusted'''
     possible_terrains = {}
-    possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-']}
-    possible_terrains['v'] = {'right': ['v', '&', '/'], 'bottom': ['~', '^', '+']}
-    possible_terrains['^'] = {'right': ['^', 'L', 'D'], 'bottom': [' ', 'v', '-']}
-    possible_terrains['['] = {'right': [']', ' '], 'bottom': ['[', '\\', 'D']}
-    possible_terrains[']'] = {'right': ['[', '+', '~'], 'bottom': [']', '/']}
-    possible_terrains['\\'] = {'right': ['&', '/', 'v'], 'bottom': ['+', '^']}
-    possible_terrains['/'] = {'right': ['\\', '~'], 'bottom': ['~', '^', 'L']}
-    possible_terrains['+'] = {'right': ['^', 'L', 'D'], 'bottom': ['[', '\\', 'D']}
-    possible_terrains['L'] = {'right': ['+', '~', '['], 'bottom': [']', '/', 'C']}
-    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\']}
-    possible_terrains['D'] = {'right': [' ','-', ']'], 'bottom': [' ', '-', 'v', ' ']}
-    possible_terrains['C'] = {'right': ['L','^', 'D'], 'bottom': ['&', '-', 'v', ' ']}
-    possible_terrains['-'] = {'right': ['/', 'v'], 'bottom': [']', '/']}
-    possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+']}
-    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+']
-    row_size = random.choice(range(10, 17, 2))
-    column_size = random.choice(range(20, 31, 2))
+    possible_terrains[' '] = {'right': [']', ' ', 'C', '-'], 'bottom': [' ', 'v', '-', '&'], 'left': [' ', '[', 'D', '&', '\\'], 'top': [' ', '^', 'D', 'C']}
+    possible_terrains['v'] = {'right': ['v', '&', '/', 'x'], 'bottom': ['~', '^', '+', 'L'], 'left': ['v', '-', '\\', '%'], 'top': [' ', '^', '+', 'L', 'C', 'D']}
+    possible_terrains['^'] = {'right': ['^', 'L', 'D', '%'], 'bottom': [' ', 'v', '-', '&'], 'left': ['^', '+', 'C', 'x'], 'top': ['~', 'v', '\\', '/']}
+    possible_terrains['['] = {'right': [']', ' ', '-', 'C'], 'bottom': ['[', '\\', 'D', '%'], 'left': [']', '~', 'L', '/'], 'top': ['[', '&', 'x', '+']}
+    possible_terrains[']'] = {'right': ['[', '+', '~', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['[', 'L', ' ', '&', 'D'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['\\'] = {'right': ['&', '/', 'v', 'x'], 'bottom': ['+', '^', '~', 'L'], 'left': ['/', 'L', '~', ']'], 'top': ['+', '&', '[', 'x']}
+    possible_terrains['/'] = {'right': ['\\', '~', '[', '+'], 'bottom': ['~', '^', 'L', '+'], 'left': ['\\', '-', 'v', '%'], 'top': ['-', 'L', ']', '\\', '%']}
+    possible_terrains['+'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['L', ']', '~', '/'], 'top': ['~', '\\', '/', 'v'] }
+    possible_terrains['L'] = {'right': ['+', '~', '[', '\\'], 'bottom': [']', '/', 'C', 'x'], 'left': ['+', 'C', '^', 'x'], 'top': ['~', '\\', '/', 'v']}
+    possible_terrains['&'] = {'right': ['-', ' ', 'C', ']'], 'bottom': ['[', 'D', '\\', '%'], 'left': ['-', 'v', '\\', '%'], 'top': [' ', '^', 'D', 'C']}
+    possible_terrains['D'] = {'right': [' ','-', ']', 'C'], 'bottom': [' ', '-', 'v', ' ', '&'], 'left': ['C', '^', '+', 'x'], 'top': ['&', '[', '+', 'x']}
+    possible_terrains['C'] = {'right': ['L','^', 'D', '%'], 'bottom': ['&', '-', 'v', ' '], 'left': ['D', ' ', '&', '['], 'top': ['-', ']', 'L', '%']}
+    possible_terrains['-'] = {'right': ['/', 'v', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['&', 'D', ' ', '['], 'top': ['D', ' ', 'C', '^']}
+    possible_terrains['~'] = {'right': ['~', '[', '\\', '+'], 'bottom': ['~', 'L', '^', '+'], 'left': [']', '/', 'L', '~'], 'top': ['~','v', '\\', '/']}
+    possible_terrains['x'] = {'right': ['^', 'L', 'D', '%'], 'bottom': ['[', '\\', 'D', '%'], 'left': ['v', '\\', '-', '%'], 'top': [']', 'L', '-', '%']}
+    possible_terrains['%'] = {'right': ['v', '/', '&', 'x'], 'bottom': [']', '/', 'C', 'x'], 'left': ['^', '+', 'C', 'x'], 'top': ['[', '+', '&', 'x']}
+    possible_terrains['ALL'] = [' ', 'v', '^', '[', ']', '\\', '/', 'L', '&', 'D', 'C', '~', '-', '+', 'x', '%']
+    
+    '''Init Map'''
+    row_size = 16
+    column_size = 30
     MAP = np.empty([row_size, column_size],  dtype='str')
-    for row in range(0, row_size):
-        for column in range(0, column_size):
-            left_choice = None
-            top_choice = None
-            '''Build the frame'''
-            if(column == 0 or column == column_size - 1):
-                    MAP[row, column] = '|'
-            if(row == 0 or row == row_size - 1):
-                MAP[row,column] = '-'
-            if((row == 0 or row == row_size-1) and (column == 0 or column == column_size - 1)):
-                MAP[row,column] = '+'
-            '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
-            if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
-                if row >= 3:
-                    top_choice = MAP[row -2, column]
-                if column >= 3:
-                    left_choice = MAP[row, column -2]
-                possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
-                possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
-                MAP[row, column] = random.choice(np.intersect1d(possible_right_terrain, possible_bottom_terrain))
-            '''Add dots arround terrain tiles'''
-            if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
-                MAP[row, column] = '.'
+
+    '''Go through the Map and set tiles'''
+    row = 0
+    column = 0
+    while row < row_size -1 or column < column_size - 1:
+        need_restart = False
+        left_choice = None
+        top_choice = None
+        first_row_choice = None
+        first_column_choice = None
+
+        '''Build the frame'''
+        if(column == 0 or column == column_size - 1):
+                MAP[row, column] = '|'
+        if(row == 0 or row == row_size - 1):
+            MAP[row,column] = '-'
+        if((row == 0 or row == row_size-1) and (column == 0 or column == column_size - 1)):
+            MAP[row,column] = '+'
+
+        '''For every second row and column add a random terrain, based on the terrain on the left and on the top if available'''
+        if((column % 2 == 1 and row % 2 == 1) and MAP[row, column] == ''):
+            '''Last row need to fit first row in order to let the bugs walk through'''
+            if row == row_size - 3:
+                first_row_choice = MAP[1, column];
+            if row >= 3:
+                top_choice = MAP[row - 2, column]
+            '''Last column need to fit first column in order to let the bugs walk through'''
+            if column == column_size - 3:
+                first_column_choice = MAP[row, 1]
+            if column >= 3:
+                left_choice = MAP[row, column -2]
+            possible_right_terrain = possible_terrains[left_choice]['right'] if left_choice is not None else possible_terrains['ALL']
+            possible_bottom_terrain = possible_terrains[top_choice]['bottom'] if top_choice is not None else possible_terrains['ALL']
+            possible_last_row_terrain = possible_terrains[first_row_choice]['top'] if first_row_choice is not None else possible_terrains['ALL']
+            possible_last_column_terrain = possible_terrains[first_column_choice]['left'] if first_column_choice is not None else possible_terrains['ALL']
+            intersected_list = reduce(np.intersect1d, (possible_right_terrain, possible_bottom_terrain, possible_last_row_terrain, possible_last_column_terrain))
+            '''If no possible tile was found, start again, otherwise choose a tile'''
+            if len(intersected_list) > 0:
+                MAP[row, column] = random.choice(intersected_list)
+            else:
+                need_restart = True
+        
+        '''Add dots arround terrain tiles'''
+        if((column % 2 == 0 or row % 2 == 0) and MAP[row, column] == '') :
+            MAP[row, column] = '.'
+        
+        '''Calculate the next row, column to set a tile for. If need restart, init map again and start again'''
+        if need_restart:
+            row = 0
+            column = 0
+            MAP = np.empty([row_size, column_size],  dtype='str')
+        else:
+            if column < column_size -1  and row <= row_size -1 :
+                column = column + 1
+            elif column == column_size -1 and row <= row_size -1:
+                column = 0
+                row = row + 1
     return MAP
 
 def get_conf(filename='conf.yml',section='world'):
@@ -83,7 +130,7 @@ class World:
         This is the world (environment) that objects exist in. 
     """
 
-    def __init__(self,fname=None,init_sprites=2):
+    def __init__(self,fname=None,init_sprites=0):
 
         # Load the configuration
         cfg = get_conf(section='world')
@@ -94,10 +141,10 @@ class World:
         self.N_COLS = map_codes.shape[1]
         self.WIDTH = self.N_COLS * TILE_SIZE
         self.HEIGHT = self.N_ROWS * TILE_SIZE
+        self.PLANT_TO_USE = ID_PLANT
         SCREEN = array([self.WIDTH, self.HEIGHT])
 
         step = 0
-        growth_rate = cfg['growth_rate']
 
         ## GRID REGISTER and GRID COUNT 
         self.register = [[[None for l in range(MAX_GRID_DETECTION)] for k in range(self.N_ROWS)] for j in range(self.N_COLS)]
@@ -136,10 +183,11 @@ class World:
         for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
             Thing(self.random_position(), mass=100+random.rand()*1000, ID=ID_ROCK)
         for i in range(int(self.N_ROWS*FACTOR/5*self.N_COLS)):
-            Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
+            Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
 
         # Get a list of the agents we may deploy 
         agents = get_conf(section='bugs').values()
+        print(agents)
 
         # Some animate creatures
         #for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
@@ -150,14 +198,21 @@ class World:
 
         self.allSprites.clear(self.screen, background)
 
+        ### Adjust cf settings
+        self.adjust_settings()
+        ### Add plants and rocks and adjust params for Things and Livings based on random
+        self.create_things_and_creatures(cfg['max_plant_size'], agents)
+
         ## MAIN LOOP ##
         sel_obj = None 
         GRAPHICS_ON = True
         GRID_ON = False
         self.FPS = FPS
+        clock = pygame.time.Clock()
+        timer = 0
+        dt = 0
         while True:
             self.clock.tick(self.FPS)
-
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
@@ -211,17 +266,41 @@ class World:
                         self.FPS = self.FPS - 50
                         print("FPS: %d" % self.FPS)
                     elif event.key == pygame.K_COMMA:
-                        growth_rate = growth_rate + 100
-                        print("Lower energy influx (new plant every %d ticks)" % growth_rate)
+                        with open(CONFIG_FILENAME) as file:
+                            config_file = yaml.load(file)
+                            growth_rate = config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)]
+                            config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)] = growth_rate + 100             
+                            with open(CONFIG_FILENAME, "w") as file:
+                                yaml.dump(config_file, file)
+                            print("Lower energy influx (new plant every %d ticks)" % (growth_rate + 100))
                     elif event.key == pygame.K_PERIOD:
-                        growth_rate = max(growth_rate - 100,10)
-                        print("Higher energy influx (new plant every %d ticks)" % growth_rate)
+                        with open(CONFIG_FILENAME) as file:
+                            config_file = yaml.load(file)
+                            growth_rate = config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)]
+                            config_file['world']['growth_rate']['ID_' + str(self.PLANT_TO_USE)] = growth_rate - 100.10             
+                            with open(CONFIG_FILENAME, "w") as file:
+                                yaml.dump(config_file, file)
+                        print("Higher energy influx (new plant every %d ticks)" % (growth_rate - 100.10))
                     elif event.key == pygame.K_1:
                         print("New Rock")
                         Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_ROCK)
+                    elif event.key == pygame.K_2:
+                        print("New Tree Trunk")
+                        Thing(array(pygame.mouse.get_pos()),mass=500, ID=ID_TREE_TRUNK)
                     elif event.key == pygame.K_3:
-                        print("New Plant")
-                        Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
+                        if timer == 0:
+                            timer = 0.001
+                        elif timer < 0.25:
+                            print('Double click -> Changing plant kind')
+                            if self.PLANT_TO_USE == ID_PLANT:
+                                 self.PLANT_TO_USE = ID_PLANT_HARD_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_HARD_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_SOFT_TOXIC
+                            elif self.PLANT_TO_USE == ID_PLANT_SOFT_TOXIC:
+                                self.PLANT_TO_USE = ID_PLANT_MEDICINE
+                            else:
+                                self.PLANT_TO_USE = ID_PLANT
+                            timer = 0
                     elif event.key == pygame.K_4 and len(agents) >= (4-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[4-4], ID = 4)
@@ -237,6 +316,9 @@ class World:
                     elif event.key == pygame.K_8 and len(agents) >= (8-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[8-4], ID = 8)
+                    elif event.key == pygame.K_9:
+                        print("New Monster")
+                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY,  ID = ID_MONSTER)
                     elif event.key == pygame.K_h:
                         print("=== HELP ===")
                         dic = ["VOID", "ROCK", "MISC", "BUG1", "BUG2", "BUG3"]
@@ -245,15 +327,24 @@ class World:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     print("Click")
                     sel_obj = self.quick_collision(pygame.mouse.get_pos())
+            
+            if timer != 0:
+                timer += dt
+                if timer >= 0.25:
+                    Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
+                    print("New Plant")
+                    timer = 0
 
+            dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
-            if step % growth_rate == 0:
-                p = self.random_position()
-                if p is not None and len(self.plants) < 1000:
-                    Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=ID_PLANT)
-                banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
-                print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
+            for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE):
+                if step % get_conf(section='world')['growth_rate']['ID_' + str(plant_type)] == 0:
+                    p = self.random_position()
+                    if p is not None and len(self.plants) < 1000:
+                        Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=plant_type)
+                    banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
+                    print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
 
             # Reset reg-counts and Register all sprites
             self.regcount = zeros((self.N_COLS,self.N_ROWS),int) 
@@ -289,6 +380,29 @@ class World:
                 pygame.display.update(rects)
                 pygame.display.flip()
                 pygame.time.delay(self.FPS)
+
+    def create_things_and_creatures(self, max_plant_size, agents):
+        #Add plants and rocks
+        for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK):
+            for i in range(random.randint(0,9)):
+                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
+        #Add monster
+        for i in range(random.randint(0,9)):
+            Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
+        
+    def adjust_settings(self, filename='conf.yml'):
+        with open(filename) as file:
+            config_file = yaml.load(file)
+            cfg_world = config_file['world']
+            cfg_objects = config_file['objects']
+            for growth_rate in cfg_world['growth_rate']:
+                cfg_world['growth_rate'][growth_rate] = random.randint(1, 1000)
+            cfg_objects['toxic_damage'] = random.uniform(0, 0.999)
+            cfg_objects['monster_attack_damage_multiplier'] = random.randint(0, 100)
+            with open(filename, "w") as file:
+                yaml.dump(config_file, file)
+        with open(filename) as file:
+            config_file = yaml.load(file)
 
 
     def random_position(self, on_empty=False):
