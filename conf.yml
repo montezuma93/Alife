@@ -4,10 +4,10 @@ world:
     max_grid_objects: 100 # maximum objects that can be detected at once
     fps : 60              # frames per second
     growth_rate :         # growth rate of plants (number per tick)
-        id_3: 200
-        id_31: 200
-        id_32: 200
-        id_33: 200
+        ID_3: 200
+        ID_31: 200
+        ID_32: 200
+        ID_33: 200
     max_plant_size : 1500
 objects:
     toxic_damage : 0.995
