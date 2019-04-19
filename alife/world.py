@@ -198,7 +198,7 @@ class World:
         self.allSprites.clear(self.screen, background)
 
         ### Add plants and rocks and adjust params for Things and Livings based on random
-        self.create_things_and_creatures(cfg['max_plant_size'])
+        self.create_things_and_creatures(cfg['max_plant_size'], agents)
         ### Adjust cf settings
         # TODO
 
@@ -307,7 +307,7 @@ class World:
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[8-4], ID = 8)
                     elif event.key == pygame.K_9:
                         print("New Monster")
-                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY,  ID = 9)
+                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY,  ID = ID_MONSTER)
                     elif event.key == pygame.K_h:
                         print("=== HELP ===")
                         dic = ["VOID", "ROCK", "MISC", "BUG1", "BUG2", "BUG3"]
@@ -369,13 +369,19 @@ class World:
                 pygame.display.flip()
                 pygame.time.delay(self.FPS)
 
-    def create_things_and_creatures(self, max_plant_size):
-        #TODO Add animals
-        for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE):
+    def create_things_and_creatures(self, max_plant_size, agents):
+        #Add plants and rocks
+        for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK):
             for i in range(random.randint(0,9)):
-                amount_of_plants = random.randint(0, 9)
-                for j in range(amount_of_plants):
+                amount = random.randint(0, 9)
+                for j in range(amount):
                     Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
+        #Add monster
+        for i in range(random.randint(0,9)):
+            amount = random.randint(0, 9)
+            for j in range(amount):
+                Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
+        
                 
 
     def random_position(self, on_empty=False):
