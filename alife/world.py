@@ -191,6 +191,11 @@ class World:
 
         self.allSprites.clear(self.screen, background)
 
+        ### Add plants and rocks and adjust params for Things and Livings based on random
+        self.create_things_and_creatures(cfg['max_plant_size'])
+        ### Adjust cf settings
+        # TODO
+
         ## MAIN LOOP ##
         sel_obj = None 
         GRAPHICS_ON = True
@@ -352,6 +357,14 @@ class World:
                 pygame.display.flip()
                 pygame.time.delay(self.FPS)
 
+    def create_things_and_creatures(self, max_plant_size):
+        #TODO Add animals
+        for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE):
+            for i in range(random.randint(0,9)):
+                amount_of_plants = random.randint(0, 9)
+                for j in range(amount_of_plants):
+                    Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
+                
 
     def random_position(self, on_empty=False):
         ''' Find a random position somewhere on the screen over land tiles
