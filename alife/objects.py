@@ -12,13 +12,14 @@ set_printoptions(precision=4)
 # Types of Sprites/Things/Objects
 ID_VOID = 0
 ID_ROCK = 1
-ID_MISC = 2
+ID_TREE_TRUNK = 2
 ID_PLANT = 3
 ID_PLANT_HARD_TOXIC = 31
 ID_PLANT_SOFT_TOXIC = 32
 ID_PLANT_MEDICINE = 33
 ID_ANIMAL = 4
 ID_OTHER = 5
+ID_MONSTER = 9
 
 # Inputs (state space)
 IDX_COLIDE = [0,1,2]
@@ -48,6 +49,7 @@ FLIGHT_SPEED = cfg['flight_speed']     # After this speed, a creature takes flig
 FLIGHT_BOOST = cfg['flight_boost']     # Speed is multiplied by this factor if in flight
 DIVIDE_LIMIT = cfg['divide_limit']     # Divide when at this proportion of energy
 INIT_ENERGY = cfg['init_energy']       # How much of its max energy is a creature born with
+MONSTER_ATTACK_DAMAGE_MULTIPLIER = cfg['monster_attack_damage_multiplier'] # Multiplies the attack damage if its a monster
 BITE_RATIO = cfg['bite_ratio']         #
 MIN_ATTACK_ANGLE = pi                  # Minimum attack angle 
 
@@ -211,7 +213,6 @@ class Creature(Thing):
         '''
             A being hits me.
         '''
-
         if being.ID <= ID_PLANT:
             # Don't care about getting hit by rocks, grass, etc.
             return
@@ -231,7 +232,8 @@ class Creature(Thing):
                 r = random.rand()
                 if r > (theta[i] / MIN_ATTACK_ANGLE): 
                     # Attack succeeded
-                    bite = r * obj[i].speed * 200. * BITE_RATIO
+                    bite = (r * obj[i].speed * 200. * BITE_RATIO * MONSTER_ATTACK_DAMAGE_MULTIPLIER 
+                     if obj[i].ID == ID_MONSTER else r * obj[i].speed * 200. * BITE_RATIO)
                     obj[i].energy = obj[i].energy + bite
                     obj[j].energy = obj[j].energy - bite
                 else:
@@ -326,7 +328,7 @@ class Creature(Thing):
             c.energy = energy_loss
             self.energy = self.energy - energy_loss
             # (this loss should not affect the reward signal)
-            self._energy = self._energy - energy_loss 
+            self._energy = self._energy - energy_loss
 
     def update(self):
 
