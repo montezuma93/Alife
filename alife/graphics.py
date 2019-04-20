@@ -13,7 +13,7 @@ COLOR_BLACK  = (0, 0, 0)
 id2rgb = {
     0: array([0.,0.,0.]), # VOID     = 0  = BLACK
     1: array([1.,1.,1.]), # ROCK     = 1  = WHITE
-    2: array([0.,0.,0.]), # MISC     = 2  = BLACK
+    2: array([0.525, 0.247, 0.113]), # TREE_TRUNK     = 2  = BROWN
     3: array([0.,1.,0.]), # PLANT    = 3  = GREEN
     31: array([1, 0.356, 0.121]), # PLANT    = 31  = ORANGE
     32: array([0.650, 0.062, 0.996]), # PLANT    = 32  = PURPLE
