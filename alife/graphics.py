@@ -9,14 +9,20 @@ COLOR_RED  = (255, 0, 0)
 COLOR_BLACK  = (0, 0, 0)
 
 # RGB intensities given a sprite ID
-id2rgb = array([
-    [0.,0.,0.], # VOID     = 0  = BLACK
-    [1.,1.,1.], # ROCK     = 1  = WHITE
-    [0.,0.,0.], # MISC     = 2  = BLACK
-    [0.,1.,0.], # PLANT    = 3  = GREEN
-    [0.,0.,1.], # ANIMAL   = 4  = BLUE
-    [1.,0.,0.], # ENEMY    = 5  = RED
-    ])
+
+id2rgb = {
+    0: array([0.,0.,0.]), # VOID     = 0  = BLACK
+    1: array([1.,1.,1.]), # ROCK     = 1  = WHITE
+    2: array([0.525, 0.247, 0.113]), # TREE_TRUNK     = 2  = BROWN
+    3: array([0.,1.,0.]), # PLANT    = 3  = GREEN
+    31: array([1, 0.356, 0.121]), # PLANT    = 31  = ORANGE
+    32: array([0.650, 0.062, 0.996]), # PLANT    = 32  = PURPLE
+    33: array([0, 0.901, 0.694]), # PLANT    = 33  = TURQUOISE
+    4: array([0.,0.,1.]), # ANIMAL   = 4  = BLUE
+    5: array([1.,0.,0.]), # ENEMY    = 5  = RED
+    9: array([0.929, 0.129, 0.149]), # MONSTER    = 5  = DARK RED
+
+}
 
 def rgb2color(a, default=COLOR_BLACK):
     ''' 
@@ -218,7 +224,7 @@ def draw_banner(surface, s):
     #print(lines)
     myfont = pygame.font.SysFont("monospace", 17)
     l,h = myfont.size('--------------------')
-    pygame.draw.rect(surface, COLOR_BLACK, (1,1,1+l,1+h*len(lines)))
+    pygame.draw.rect(surface, COLOR_BLACK, (1,1,600+l,1+h*len(lines)))
     j = 0
     color = COLOR_RED
     for line in lines:

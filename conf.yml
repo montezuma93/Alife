@@ -1,29 +1,29 @@
-world:
-    factor: 2             # how many sprites per grid square
-    tile_size: 64         # the length (and width) of a tile in pixels
-    max_grid_objects: 100 # maximum objects that can be detected at once
-    fps : 60              # frames per second
-    growth_rate :         # growth rate of plants (number per tick)
-        ID_3: 200
-        ID_31: 200
-        ID_32: 200
-        ID_33: 200
-    max_plant_size : 1500
+bugs:
+  1: alife.agents.evolution/SimpleEvolver/{'H':10}
+  2: alife.agents.evolution/SimpleEvolver/{'H':-10}
+  3: alife.agents.evolution/SimpleEvolver/{'H':10}
 objects:
-    toxic_damage : 0.995
-    terrain_damage : 1.5
-    bounce_damage : 1.
-    flight_speed : 5.0
-    flight_boost : 5.0
-    default_mass_thing : 500
-    default_mass_bug : 300
-    bite_ratio : 0.05
-    init_energy : 1.0
-    touch_threshold : 0.9    # after this level is considered touch
-    divide_limit : 2.0
-    monster_init_energy: 1000
-    monster_attack_damage_multiplier: 5
-bugs: # todo, include 1 and 2 for rock, plant, etc. 
-    1 : alife.agents.evolution/SimpleEvolver/{'H':10}
-    2 : alife.agents.evolution/SimpleEvolver/{'H':-10}
-    3 : alife.agents.evolution/SimpleEvolver/{'H':10}
+  bite_ratio: 0.05
+  bounce_damage: 1.0
+  default_mass_bug: 300
+  default_mass_thing: 500
+  divide_limit: 2.0
+  flight_boost: 5.0
+  flight_speed: 5.0
+  init_energy: 1.0
+  monster_attack_damage_multiplier: 82
+  monster_init_energy: 1000
+  terrain_damage: 1.5
+  touch_threshold: 0.9
+  toxic_damage: 0.6951929677198017
+world:
+  factor: 2
+  fps: 60
+  growth_rate:
+    ID_3: 608
+    ID_31: 913
+    ID_32: 970
+    ID_33: 583
+  max_grid_objects: 100
+  max_plant_size: 1500
+  tile_size: 64

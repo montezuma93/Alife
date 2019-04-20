@@ -327,6 +327,7 @@ class World:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     print("Click")
                     sel_obj = self.quick_collision(pygame.mouse.get_pos())
+                    print(sel_obj)
             
             if timer != 0:
                 timer += dt
@@ -383,9 +384,9 @@ class World:
 
     def create_things_and_creatures(self, max_plant_size, agents):
         #Add plants and rocks
-        for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK):
+        for thing_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK, ID_TREE_TRUNK):
             for i in range(random.randint(0,9)):
-                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=plant_type)
+                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
         #Add monster
         for i in range(random.randint(0,9)):
             Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
@@ -610,7 +611,7 @@ def object2rgb(ID_self, ID_other):
         If an object of ID_self is in vision range of an object ID,other, what
         does it see?
     '''
-    if ID_self is None or ID_other < ID_ANIMAL:
+    if ID_self is None or int(str(ID_other)[:1]) == ID_PLANT or ID_other == ID_ROCK or ID_other == ID_TREE_TRUNK:
         # A plant and a rock always looks the same
         return id2rgb[ID_other]
     elif ID_self == ID_other:

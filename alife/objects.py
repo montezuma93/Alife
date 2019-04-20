@@ -204,7 +204,7 @@ class Creature(Thing):
             self.brain = dna.copy()
 
     def __str__(self):
-        return str(self.brain)
+        return str(self.brain) + "\n" + str(self.observation)
 
     def move(self):
         ''' Move '''
