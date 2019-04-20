@@ -327,6 +327,7 @@ class World:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     print("Click")
                     sel_obj = self.quick_collision(pygame.mouse.get_pos())
+                    print(sel_obj)
             
             if timer != 0:
                 timer += dt
@@ -610,7 +611,7 @@ def object2rgb(ID_self, ID_other):
         If an object of ID_self is in vision range of an object ID,other, what
         does it see?
     '''
-    if ID_self is None or ID_other < ID_ANIMAL:
+    if ID_self is None or int(str(ID_other)[:1]) == ID_PLANT or ID_other == ID_ROCK:
         # A plant and a rock always looks the same
         return id2rgb[ID_other]
     elif ID_self == ID_other:
