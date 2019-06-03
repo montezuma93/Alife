@@ -1,7 +1,6 @@
 bugs:
   1: alife.agents.evolution/SimpleEvolver/{'H':10}
   2: alife.agents.evolution/SimpleEvolver/{'H':-10}
-  3: alife.agents.evolution/SimpleEvolver/{'H':10}
 objects:
   bite_ratio: 0.05
   bounce_damage: 1.0
@@ -11,19 +10,17 @@ objects:
   flight_boost: 5.0
   flight_speed: 5.0
   init_energy: 1.0
-  monster_attack_damage_multiplier: 82
-  monster_init_energy: 1000
   terrain_damage: 1.5
   touch_threshold: 0.9
-  toxic_damage: 0.6951929677198017
+  toxic_damage: 0.7328979301405317
 world:
   factor: 2
   fps: 60
   growth_rate:
-    ID_3: 608
-    ID_31: 913
-    ID_32: 970
-    ID_33: 583
+    ID_3: 685
+    ID_31: 864
+    ID_32: 698
+    ID_33: 490
   max_grid_objects: 100
   max_plant_size: 1500
   tile_size: 64

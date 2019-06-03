@@ -20,7 +20,6 @@ id2rgb = {
     33: array([0, 0.901, 0.694]), # PLANT    = 33  = TURQUOISE
     4: array([0.,0.,1.]), # ANIMAL   = 4  = BLUE
     5: array([1.,0.,0.]), # ENEMY    = 5  = RED
-    9: array([0.929, 0.129, 0.149]), # MONSTER    = 5  = DARK RED
 
 }
 
@@ -151,8 +150,6 @@ def build_image_png(pos,rad,ID):
         image = pygame.image.load('./img/tree_trunk.png').convert_alpha()
     elif ID == 3 or ID == 31 or ID == 32 or ID == 33:
         image = get_tree(ID, random.choice(len(trees)))
-    elif ID == 9:
-         image = pygame.image.load('./img/spider.png').convert_alpha()
     elif ID >= 4 and ID <= 11:
         image = pygame.image.load('./img/green_bug_m%d.png' % (ID-3)).convert_alpha()
     else:

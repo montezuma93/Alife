@@ -18,7 +18,6 @@ def get_conf(filename='conf.yml',section='world'):
 
 CONFIG_FILENAME='conf.yml'
 cfg = get_conf(filename='conf.yml',section='objects')
-MONSTER_INIT_ENERGY = cfg['monster_init_energy'] # Added factor when hitting a wall or landing on water
 
 # Parameters
 TILE_SIZE = 64               # tile size (width and height, in pixels)
@@ -316,9 +315,6 @@ class World:
                     elif event.key == pygame.K_8 and len(agents) >= (8-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[8-4], ID = 8)
-                    elif event.key == pygame.K_9:
-                        print("New Monster")
-                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY,  ID = ID_MONSTER)
                     elif event.key == pygame.K_h:
                         print("=== HELP ===")
                         dic = ["VOID", "ROCK", "MISC", "BUG1", "BUG2", "BUG3"]
@@ -387,9 +383,6 @@ class World:
         for thing_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK, ID_TREE_TRUNK):
             for i in range(random.randint(0,9)):
                 Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
-        #Add monster
-        for i in range(random.randint(0,9)):
-            Creature(self.random_position(), dna = list(agents)[2], energy = MONSTER_INIT_ENERGY, ID=ID_MONSTER)
         
     def adjust_settings(self, filename='conf.yml'):
         with open(filename) as file:
@@ -399,7 +392,6 @@ class World:
             for growth_rate in cfg_world['growth_rate']:
                 cfg_world['growth_rate'][growth_rate] = random.randint(1, 1000)
             cfg_objects['toxic_damage'] = random.uniform(0, 0.999)
-            cfg_objects['monster_attack_damage_multiplier'] = random.randint(0, 100)
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)
         with open(filename) as file:
