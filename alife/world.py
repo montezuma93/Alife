@@ -4,6 +4,7 @@ import pygame
 import random
 import numpy as np
 from functools import reduce
+from prettytable import PrettyTable
 
 from graphics import *
 from objects import *
@@ -199,8 +200,21 @@ class World:
 
         ### Adjust cf settings
         self.adjust_settings()
+        ### Create proposition table
+        self.create_proposition_table()
         ### Add plants and rocks and adjust params for Things and Livings based on random
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
+
+        ### Write configuration to file
+        f = open("log.txt","w+")
+        x = PrettyTable()
+        header = ["Plant Type"] + list(self.proposition_table_list["3"].keys()) 
+        x.field_names = header
+        for key, row in self.proposition_table_list.items():
+            row_to_add = [key] + list(row.values())     
+            x.add_row(row_to_add)
+        f.write(x.get_string())
+        f.close()
 
         ## MAIN LOOP ##
         sel_obj = None 
@@ -210,6 +224,8 @@ class World:
         clock = pygame.time.Clock()
         timer = 0
         dt = 0
+        self.IS_DAY_TIME = True
+        day_timer = 0
         while True:
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
@@ -292,11 +308,11 @@ class World:
                         elif timer < 0.25:
                             print('Double click -> Changing plant kind')
                             if self.PLANT_TO_USE == ID_PLANT:
-                                 self.PLANT_TO_USE = ID_PLANT_HARD_TOXIC
-                            elif self.PLANT_TO_USE == ID_PLANT_HARD_TOXIC:
-                                self.PLANT_TO_USE = ID_PLANT_SOFT_TOXIC
-                            elif self.PLANT_TO_USE == ID_PLANT_SOFT_TOXIC:
-                                self.PLANT_TO_USE = ID_PLANT_MEDICINE
+                                 self.PLANT_TO_USE = ID_PLANT_ORANGE
+                            elif self.PLANT_TO_USE == ID_PLANT_ORANGE:
+                                self.PLANT_TO_USE = ID_PLANT_PURPLE
+                            elif self.PLANT_TO_USE == ID_PLANT_PURPLE:
+                                self.PLANT_TO_USE = ID_PLANT_TURQUOISE
                             else:
                                 self.PLANT_TO_USE = ID_PLANT
                             timer = 0
@@ -335,13 +351,18 @@ class World:
             dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
-            for plant_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE):
+            
+            for plant_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_TURQUOISE):
                 if step % get_conf(section='world')['growth_rate']['ID_' + str(plant_type)] == 0:
                     p = self.random_position()
                     if p is not None and len(self.plants) < 1000:
                         Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=plant_type)
                     banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
                     print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
+            day_timer = day_timer + 1
+            if day_timer >= 400:
+                self.IS_DAY_TIME = not self.IS_DAY_TIME
+                day_timer = 0
 
             # Reset reg-counts and Register all sprites
             self.regcount = zeros((self.N_COLS,self.N_ROWS),int) 
@@ -374,13 +395,23 @@ class World:
                 if sel_obj is not None:
                     sel_obj.draw_selected(self.screen)
                 # Display
-                pygame.display.update(rects)
+                if self.IS_DAY_TIME:
+                    pygame.display.update(rects)
+                else:
+                    darken_percent = .30
+                    dark = pygame.Surface(self.screen.get_size()).convert_alpha()
+                    dark.fill((0, 0, 0, darken_percent*255))
+                    self.screen.blit(dark, (0, 0))
+
                 pygame.display.flip()
                 pygame.time.delay(self.FPS)
 
     def create_things_and_creatures(self, max_plant_size, agents):
-        #Add plants and rocks
-        for thing_type in (ID_PLANT, ID_PLANT_HARD_TOXIC, ID_PLANT_SOFT_TOXIC, ID_PLANT_MEDICINE, ID_ROCK, ID_TREE_TRUNK):
+        #Add rocks and tree trunks
+        for thing_type in (ID_ROCK, ID_TREE_TRUNK):
+            for i in range(random.randint(0,9)):
+                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
+        for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_TURQUOISE):
             for i in range(random.randint(0,9)):
                 Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
         
@@ -391,12 +422,26 @@ class World:
             cfg_objects = config_file['objects']
             for growth_rate in cfg_world['growth_rate']:
                 cfg_world['growth_rate'][growth_rate] = random.randint(1, 1000)
-            cfg_objects['toxic_damage'] = random.uniform(0, 0.999)
+            cfg_objects['toxic_damage'] = random.uniform(10, 50)
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)
         with open(filename) as file:
             config_file = yaml.load(file)
 
+    def create_proposition_table(self):
+        self.proposition_table_list = {}
+        plants_toxicity = ['TOXIC', 'NONTOXIC']
+        for plant_id in PLANT_IDS:
+            self.proposition_table_list[str(plant_id)] = {
+                'day_1': random.choice(plants_toxicity),
+                'day_2': random.choice(plants_toxicity),
+                'day_1_2': random.choice(plants_toxicity),
+                'day_': random.choice(plants_toxicity),
+                'night_1': random.choice(plants_toxicity),
+                'night_2': random.choice(plants_toxicity),
+                'night_1_2': random.choice(plants_toxicity),
+                'night_': random.choice(plants_toxicity)
+            }      
 
     def random_position(self, on_empty=False):
         ''' Find a random position somewhere on the screen over land tiles
