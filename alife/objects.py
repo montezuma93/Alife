@@ -14,9 +14,10 @@ ID_VOID = 0
 ID_ROCK = 1
 ID_TREE_TRUNK = 2
 ID_PLANT = 3
-ID_PLANT_HARD_TOXIC = 31
-ID_PLANT_SOFT_TOXIC = 32
-ID_PLANT_MEDICINE = 33
+ID_PLANT_ORANGE = 31
+ID_PLANT_PURPLE = 32
+ID_PLANT_TURQUOISE = 33
+PLANT_IDS = [3, 31, 32, 33]
 ID_ANIMAL = 4
 ID_OTHER = 5
 
@@ -123,28 +124,21 @@ class Thing(pygame.sprite.DirtySprite):
             self.wrap(world)
         return
 
-    def hit_by(self, creature):
+    def hit_by(self, creature, world):
         '''
             Collision. A creature collides with me.
         '''
-        if ((self.ID == ID_PLANT or self.ID == ID_PLANT_HARD_TOXIC or self.ID == ID_PLANT_SOFT_TOXIC or self.ID == ID_PLANT_MEDICINE)
+        if ((self.ID == ID_PLANT or self.ID == ID_PLANT_ORANGE or self.ID == ID_PLANT_PURPLE or self.ID == ID_PLANT_TURQUOISE)
          and creature.ID >= ID_ANIMAL) :
             # The creature can eat me (one bite at a time, relative to its own size)
             bite = random.rand() * creature.energy_limit * BITE_RATIO
             self.energy = self.energy - bite
             # Creature can eat me and will get energy
-            if self.ID == ID_PLANT:
+            plants_toxicity = get_plant_toxicity(self, world)
+            if plants_toxicity == "TOXIC": 
+                creature.energy = creature.energy - TOXIC_DAMAGE
+            else: 
                 creature.energy = creature.energy + bite
-            # Creature can eat me. But will die, because plant is hard toxic.
-            elif self.ID == ID_PLANT_HARD_TOXIC:
-                creature.energy = 0
-            # Creature can eat me. But will die slowly (lose energy per time), because plant is soft toxic.
-            elif self.ID == ID_PLANT_SOFT_TOXIC :
-                creature.energy = creature.energy * TOXIC_DAMAGE
-                creature.intoxicated = True
-            elif self.ID == ID_PLANT_MEDICINE :
-                creature.intoxicated = False
-
         elif self.ID == ID_ROCK:
             # I am a rock
             creature.energy = creature.energy - creature.speed * BOUNCE_DAMAGE         # Ouch!
@@ -171,6 +165,35 @@ def spawn_agent(agent_def=None):
     if len(kwargs) > 0:
         return Agent(observ_space, action_space, **kwargs)
     return Agent(observ_space, action_space)
+
+def get_plant_toxicity(plant, world):
+    nearby_objects = []
+    # world get grid and all objects nearby
+    # We are currently in grid square (x,y)
+    grid_x, grid_y = world.pos2grid(plant.pos)
+    # Check collisions with objects in current and neighbouring tiles  
+    for i in [-1,0,+1]:
+        g_x = (grid_x + i) % world.N_COLS
+        for j in [-1,0,+1]:
+            g_y = (grid_y + j) % world.N_ROWS
+            # Check for collisions with other objects in this tile
+            things = world.register[g_x][g_y]
+            for i in range(world.regcount[g_x,g_y]):
+                # Just consider rock and tree trunks
+                if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK:
+                    # ... how much overlap with the this thing?
+                    olap = overlap(plant.pos,plant.radius*2,things[i].pos,things[i].radius)
+                    if(olap > 0):
+                        nearby_objects.append(things[i].ID) if things[i].ID not in nearby_objects else nearby_objects
+                        
+    nearby_objects.sort()
+    nearby_objects_stringify = [str(i) for i in nearby_objects] 
+    combination = "day_" if world.IS_DAY_TIME else "night_"
+    combination = combination + "_".join(nearby_objects_stringify)
+    #Find out if toxic or not
+    return world.proposition_table_list[str(plant.ID)][combination]
+
+    
 
 
 class Creature(Thing):
@@ -207,7 +230,7 @@ class Creature(Thing):
     def move(self):
         ''' Move '''
 
-    def hit_by(self, being):
+    def hit_by(self, being, world):
         '''
             A being hits me.
         '''
@@ -273,7 +296,7 @@ class Creature(Thing):
 
             if collision_obj is not None:
                 # Sprite (rock,plant,bug) collision
-                collision_obj.hit_by(self)
+                collision_obj.hit_by(self, world)
 
         # Normalize health level
         self.observation[IDX_ENERGY] = min((self.energy/self.energy_limit),1.)
@@ -311,9 +334,6 @@ class Creature(Thing):
         self.pa2 = rotate(self.unitv * self.radius*3,-0.3) # antenna right pos
         # Now move (this burns energy according to size and speed and the angle of turn)
         self.energy = self.energy - burn(angle, speed, self.radius)
-        # Lose energy, if unit is intoxicated
-        if self.intoxicated:
-            self.energy = self.energy * TOXIC_DAMAGE
         self.pos = self.pos + self.unitv * self.speed
         self.speed = abs(self.speed)
         # Divide (if we are DIVIDE_LIMIT times over the limit)
