@@ -27,6 +27,9 @@ class Agent(object):
         # Assign a random id label
         self.id_num = ''.join(random.choice(string.ascii_uppercase + string.digits) for ch in range(6))
 
+        #Add cognitive system
+        self.cognitive_system = Cognitive_System()
+
     def __str__(self):
         ''' Return a string representation (e.g., a label) for this agent '''
         return ("%s: %s" % (self.id_num,self.__class__.__name__))

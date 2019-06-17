@@ -318,7 +318,7 @@ class World:
                             timer = 0
                     elif event.key == pygame.K_4 and len(agents) >= (4-4):
                         print("New Agent")
-                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[4-4], ID = 4)
+                        Creature(array(pygame.mouse.get_pos()), dna = list(agents)[2], ID = 4)
                     elif event.key == pygame.K_5 and len(agents) >= (5-4):
                         print("New Agent")
                         Creature(array(pygame.mouse.get_pos()), dna = list(agents)[5-4], ID = 5)
