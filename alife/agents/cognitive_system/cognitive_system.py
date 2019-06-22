@@ -1,8 +1,10 @@
+from .long_term_memory import LongTermMemory
+from .observation_to_proposition_system import OberservationToPropositionSystem
+
 class Cognitive_System():
 
     def __init__(self):
-        self.long_term_memory = {}
+        self.long_term_memory = LongTermMemory()
+        self.observation_to_proposition_system = OberservationToPropositionSystem(True)
         print("initialized")
 
-    def observation_to_proposition(self, list_of_observated_objects):
-        print("Return Proposition")

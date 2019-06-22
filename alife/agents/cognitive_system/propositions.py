@@ -29,7 +29,6 @@ class NightProposition(TimeProposition):
     def __init__(self):
         pass
 
-
 class ColorProposition(Proposition):
     def __init__(self):
         pass
@@ -73,3 +72,12 @@ class EastOfProposition(SpatialProposition):
     def __init__(self, agent, referent):
         self.agent = referent
         self.agent = referent
+
+class Reward(Enum):
+    toxic= 1
+    nontoxic= 2
+
+class Implication():
+    def __init__(self, reward: Reward, evidence: float):
+        self.reward = reward
+        self.evidence = evidence

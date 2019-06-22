@@ -154,10 +154,9 @@ class CognitiveEnvolver(Agent):
 
         #Create cognitive system
         self.cognitive_system = Cognitive_System()
-        for cls in Proposition.__subclasses__():
-            self.cognitive_system.long_term_memory[cls.__name__] = []
         
         print(self.cognitive_system.long_term_memory)
+        print(self.cognitive_system.observation_to_proposition_system)
         
 
     def act(self,obs,reward,done=False):
