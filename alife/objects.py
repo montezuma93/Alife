@@ -148,7 +148,6 @@ class Thing(pygame.sprite.DirtySprite):
         slide_apart(creature,self)
         self.is_colliding = True
 
-
     def kill(self): # necessary?
         pygame.sprite.Sprite.kill(self)
         self.remove()
@@ -182,7 +181,7 @@ def get_plant_toxicity(plant, world):
                 # Just consider rock and tree trunks
                 if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK:
                     # ... how much overlap with the this thing?
-                    olap = overlap(plant.pos,plant.radius*2,things[i].pos,things[i].radius)
+                    olap = overlap(plant.pos,plant.radius*3,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects.append(things[i].ID) if things[i].ID not in nearby_objects else nearby_objects
                         
@@ -192,9 +191,6 @@ def get_plant_toxicity(plant, world):
     combination = combination + "_".join(nearby_objects_stringify)
     #Find out if toxic or not
     return world.proposition_table_list[str(plant.ID)][combination]
-
-    
-
 
 class Creature(Thing):
     '''
@@ -286,6 +282,10 @@ class Creature(Thing):
         self.observation[IDX_PROBE1],o1,t1 = world.collision_to_vision(self.pos+self.pa1,self.radius*3.,self)
         self.observation[IDX_PROBE2],o2,t2 = world.collision_to_vision(self.pos+self.pa2,self.radius*3.,self)
 
+        #Get nearby objects
+        #Print get day and night
+        nearby_objects = get_nearby_objects(self, world)
+
         # Unless we are flying, we will collide with any objects we overlap with
         if self.speed < FLIGHT_SPEED:
 
@@ -293,9 +293,10 @@ class Creature(Thing):
                 ## Terrain/water collision
                 self.energy = self.energy - max(1, self.speed * TERRAIN_DAMAGE)
                 slide_off(self,terrain_centre)
-
+            
+            # Sprite (rock,plant,bug) collision
             if collision_obj is not None:
-                # Sprite (rock,plant,bug) collision
+                # Observation of the reward if we got hit
                 collision_obj.hit_by(self, world)
 
         # Normalize health level
@@ -304,7 +305,7 @@ class Creature(Thing):
         # Reinforcement learning
         reward = self.energy - self._energy              # reward = energy diff from last timestep
         self._energy = self.energy                       # (save the current energy)
-        action = self.brain.act(self.observation,reward) # call upon the agent to act
+        action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward) # call upon the agent to act
         if self.selected is not None:
             action = self.selected
 
@@ -379,3 +380,25 @@ class Creature(Thing):
         # Health/Calories/Energy level
         pygame.draw.line(surface, COLOR_WHITE, self.pos-20, [self.pos[0]+20,self.pos[1]-20], 1)
         pygame.draw.line(surface, COLOR_WHITE, self.pos-20, [self.pos[0]-20+(self.observation[IDX_ENERGY]*40),self.pos[1]-20], 5)
+
+
+def get_nearby_objects(agent, world):
+    nearby_objects = []
+    # world get grid and all objects nearby
+    # We are currently in grid square (x,y)
+    grid_x, grid_y = world.pos2grid(agent.pos)
+    # Check collisions with objects in current and neighbouring tiles  
+    for i in [-1,0,+1]:
+        g_x = (grid_x + i) % world.N_COLS
+        for j in [-1,0,+1]:
+            g_y = (grid_y + j) % world.N_ROWS
+            # Check for collisions with other objects in this tile
+            things = world.register[g_x][g_y]
+            for i in range(world.regcount[g_x,g_y]):
+                # Just consider rock and tree trunks
+                if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK or things[i].ID in PLANT_IDS:
+                    # ... how much overlap with the this thing?
+                    olap = overlap(agent.pos,agent.radius*3,things[i].pos,things[i].radius)
+                    if(olap > 0):
+                        nearby_objects.append(things[i].ID) if things[i].ID not in nearby_objects else nearby_objects
+    return nearby_objects

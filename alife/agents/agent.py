@@ -60,7 +60,7 @@ class Agent(object):
 #        raise NotImplemntedError
 #        return None
 
-    def act(self,obs,reward,done=False):
+    def act(self,obs,observed_objects, is_day_time, reward,done=False):
         '''
             Act.
 
