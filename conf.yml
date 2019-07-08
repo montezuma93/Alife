@@ -1,7 +1,8 @@
 bugs:
   1: alife.agents.evolution/SimpleEvolver/{'H':10}
   2: alife.agents.evolution/SimpleEvolver/{'H':-10}
-  3: alife.agents.evolution/CognitiveEnvolver/{'H':10, 'ObservationSystem':'MultiplePropositionSystem'}
+  3: alife.agents.evolution/CognitiveEnvolver/{'H':10, 'ObservationSystem':'MultiplePropositionSystem',
+    'BeliefRevisionSystem':'FormalBeliefRevision'}
 objects:
   bite_ratio: 0.05
   bounce_damage: 1.0
@@ -13,15 +14,15 @@ objects:
   init_energy: 1.0
   terrain_damage: 1.5
   touch_threshold: 0.9
-  toxic_damage: 24.778317141070453
+  toxic_damage: 41.61302405914623
 world:
   factor: 2
   fps: 60
   growth_rate:
-    ID_3: 873
-    ID_31: 526
-    ID_32: 725
-    ID_33: 753
+    ID_3: 21
+    ID_31: 397
+    ID_32: 639
+    ID_33: 470
   max_grid_objects: 100
   max_plant_size: 1500
   tile_size: 64
