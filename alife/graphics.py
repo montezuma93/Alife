@@ -17,7 +17,7 @@ id2rgb = {
     3: array([0.,1.,0.]), # PLANT    = 3  = GREEN
     31: array([1, 0.356, 0.121]), # PLANT    = 31  = ORANGE
     32: array([0.650, 0.062, 0.996]), # PLANT    = 32  = PURPLE
-    33: array([0, 0.901, 0.694]), # PLANT    = 33  = TURQUOISE
+    33: array([0, 0.901, 0.694]), # PLANT    = 33  = BLUE
     4: array([0.,0.,1.]), # ANIMAL   = 4  = BLUE
     5: array([1.,0.,0.]), # ENEMY    = 5  = RED
 

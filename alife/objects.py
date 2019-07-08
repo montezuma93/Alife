@@ -16,7 +16,7 @@ ID_TREE_TRUNK = 2
 ID_PLANT = 3
 ID_PLANT_ORANGE = 31
 ID_PLANT_PURPLE = 32
-ID_PLANT_TURQUOISE = 33
+ID_PLANT_BLUE = 33
 PLANT_IDS = [3, 31, 32, 33]
 ID_ANIMAL = 4
 ID_OTHER = 5
@@ -128,14 +128,14 @@ class Thing(pygame.sprite.DirtySprite):
         '''
             Collision. A creature collides with me.
         '''
-        if ((self.ID == ID_PLANT or self.ID == ID_PLANT_ORANGE or self.ID == ID_PLANT_PURPLE or self.ID == ID_PLANT_TURQUOISE)
+        if ((self.ID == ID_PLANT or self.ID == ID_PLANT_ORANGE or self.ID == ID_PLANT_PURPLE or self.ID == ID_PLANT_BLUE)
          and creature.ID >= ID_ANIMAL) :
             # The creature can eat me (one bite at a time, relative to its own size)
             bite = random.rand() * creature.energy_limit * BITE_RATIO
             self.energy = self.energy - bite
             # Creature can eat me and will get energy
             plants_toxicity = get_plant_toxicity(self, world)
-            if plants_toxicity == "TOXIC": 
+            if plants_toxicity == "X": 
                 creature.energy = creature.energy - TOXIC_DAMAGE
             else: 
                 creature.energy = creature.energy + bite

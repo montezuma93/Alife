@@ -312,7 +312,7 @@ class World:
                             elif self.PLANT_TO_USE == ID_PLANT_ORANGE:
                                 self.PLANT_TO_USE = ID_PLANT_PURPLE
                             elif self.PLANT_TO_USE == ID_PLANT_PURPLE:
-                                self.PLANT_TO_USE = ID_PLANT_TURQUOISE
+                                self.PLANT_TO_USE = ID_PLANT_BLUE
                             else:
                                 self.PLANT_TO_USE = ID_PLANT
                             timer = 0
@@ -352,7 +352,7 @@ class World:
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
             
-            for plant_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_TURQUOISE):
+            for plant_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
                 if step % get_conf(section='world')['growth_rate']['ID_' + str(plant_type)] == 0:
                     p = self.random_position()
                     if p is not None and len(self.plants) < 1000:
@@ -411,7 +411,7 @@ class World:
         for thing_type in (ID_ROCK, ID_TREE_TRUNK):
             for i in range(random.randint(0,9)):
                 Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
-        for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_TURQUOISE):
+        for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
             for i in range(random.randint(0,9)):
                 Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
         
@@ -430,7 +430,7 @@ class World:
 
     def create_proposition_table(self):
         self.proposition_table_list = {}
-        plants_toxicity = ['TOXIC', 'NONTOXIC']
+        plants_toxicity = ['X', '!X']
         for plant_id in PLANT_IDS:
             self.proposition_table_list[str(plant_id)] = {
                 'day_1': random.choice(plants_toxicity),

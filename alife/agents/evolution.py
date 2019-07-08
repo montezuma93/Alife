@@ -154,7 +154,7 @@ class CognitiveEnvolver(Agent):
         self.generation = 1
 
         #Create cognitive system
-        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"))
+        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"))
         
         print(self.cognitive_system.long_term_memory)
         print(self.cognitive_system.observation_to_proposition_system)
@@ -204,7 +204,7 @@ class CognitiveEnvolver(Agent):
             3: ColorGreen(),
             31: ColorOrange(),
             32: ColorPurple(),
-            33: ColorTurquoise()
+            33: ColorBlue()
         }
         for near_object_id in nearby_objects:
             if near_object_id == 1  or near_object_id == 2:
