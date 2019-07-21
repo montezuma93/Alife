@@ -189,12 +189,194 @@ class FormalBeliefRevision(BeliefRevisionSystem):
 
   
 class ProbabilityBeliefRevision(BeliefRevisionSystem):
-    
-    def __init__(self):
-        pass
 
+    def __init__(self):
+        # ALl observed data, will be added to this dict. Key will be the Propositions. 
+        # For example: Rock and Green Plant <-> Toxic, will lead to key RGT.
+        # The value for that entry will be the amount of observations for that key. 
+        # If probability for that Propositions was 1/4, the value will be increased by 0.25
+        self.observed_data = {}
+        self.pseudo_sample_size = 10
+        self.closed_world_assumption = False
+        self.uses_occams_razor_principle = False
+
+    def set_closed_world_assumption(self, has_closed_world_assumption):
+        self.closed_world_assumption = has_closed_world_assumption
+    
+    def set_occams_razor_principle(self, uses_occams_razor_principle):
+        self.uses_occams_razor_principle = uses_occams_razor_principle
+
+    def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
+        revised_belief_base = []
+        new_observed_data_key = self.add_to_observed_data(new_sentence)
+        
+        for sentence in belief_base:
+            sentence_key = self.create_sentence_key(sentence)
+            posterior = self.calculate_posterior(sentence_key)
+            sentence.evidence = posterior
+            revised_belief_base.append(sentence)
+        
+        if len(revised_belief_base) < len(self.observed_data.keys()):
+            posterior_of_new_sentence = self.calculate_posterior(new_observed_data_key)
+            new_sentence.evidence = posterior_of_new_sentence
+            revised_belief_base.append(new_sentence)
+        return revised_belief_base
+
+    def add_to_observed_data(self, new_sentence):
+        created_key = self.create_sentence_key(new_sentence)
+        if created_key in self.observed_data:
+            self.observed_data[created_key] = self.observed_data[created_key] + new_sentence.evidence
+        else:
+            self.observed_data[created_key] = new_sentence.evidence
+        return created_key
+    
+    def create_sentence_key(self, sentence):
+        created_key = ""
+        for proposition in sentence.propositions[0][0]:
+            created_key = created_key + proposition.variable
+        created_key = created_key + sentence.propositions[0][1].value
+        if self.closed_world_assumption:
+            all_proposition_variable_names = get_variable_names_for_propositions()
+            for proposition in all_proposition_variable_names:
+                if not created_key.__contains__(proposition) and not created_key.__contains__("!" + proposition):
+                    created_key + ("!"+proposition )
+        return created_key
+
+    def calculate_posterior(self, sentence_key):
+        alpha_beta = self.calculate_alpha_and_beta(sentence_key)
+        alpha = alpha_beta[0]
+        beta = alpha_beta[1]
+        amount_of_sentence_key = self.observed_data[sentence_key]
+        total_amount_of_observed_data = sum(self.observed_data.values())
+        return (amount_of_sentence_key + alpha) / (total_amount_of_observed_data + alpha + beta)
+    
+    def calculate_alpha_and_beta(self, sentence_key):
+        if not self.closed_world_assumption and self.uses_occams_razor_principle:
+            # Total different combinations = 96
+            # () = 2*4 = 8 * length of 2 -> 8/96 = 8,33 %
+            # (T, R, D, !D) = 4*2*4 = 32 * length of 3 -> 32/96 = 33,33 %
+            # (TR, TD, RD, T!D, R!D) = 5*2*4 = 40 * length of 4 -> 40/96 = 41,66 %
+            # (TRD, TR!D) = 2*2*4 = 16 * length of 5 -> 16/96 = 16,66 %
+            total_different_combinations = 96
+            proposition_length_to_mean = {2:8, 3:32, 4:40, 5:16}
+            mean = proposition_length_to_mean.get(len(sentence_key.replace('!','')))/total_different_combinations
+            alpha = mean* self.pseudo_sample_size
+            beta = (1-mean) *self.pseudo_sample_size
+            
+            return (alpha, beta)
+        else:
+            # If closed_world_assumption all have the same length
+            return (1, 1)
+
+
+# See: A Constraint Logic Programming Approach for Computing Ordinal Conditional Functions
+# See Postulates for conditional belief revision
+# See Towards a General framework of Kinds of Forgetting in Common-Sense Belief Management
 class ConditionalBeliefRevision(BeliefRevisionSystem):
     
     def __init__(self):
         pass
+
+    def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
+        self.calculate_kappa_values(belief_base)
+
+    def calculate_kappa_values(self, belief_base):       
+        self.variables = get_variable_names_for_all_propositions
+        create_possible_worlds()
+        # indicies = length of belief_base or length of conditionals and is given
+        conditionals = self.create_conditionals(belief_base)
+        constraints = self.create_constraints(conditionals)
+
+    def create_constraints(self, conditionals):
+        constraints = []
+        for conditional in conditionals:
+            k_i_constraint = self.calculating_k_i_constraint(conditional)
+            constraints.append(k_i_constraint)
+        return constraints
+    
+    def create_possible_worlds(self):
+        possible_worlds = []
+        all_possible_worlds = [list(i) for i in itertools.product([0, 1], repeat=len(self.variables))]
+        # Remove all worlds, which aren't possible because of a plant can't be orange and blue at the same time but at least one color need to be set
+        for possible_world in all_possible_worlds:
+            amount_of_ones_in_color_propositions = possible_world[0] + possible_world[1] + possible_world[2] + possible_world[3]
+            if amount_of_ones_in_color_propositions == 1:
+                possible_worlds.append(possible_world)
+        self.possible_worlds = possible_worlds
+
+    def calculate_verifying_worlds(self, conditional):
+        verifying_worlds = []
+        for possible_world in self.possible_worlds:
+            for proposition in conditional.antecedent:
+                index_of_propostion = self.variables.index(proposition.replace("!", ""))
+                if (proposition.__contains__("!") and possible_world[index_of_propostion] == 1) or (not proposition.__contains__("!") and possible_world[index_of_propostion] == 0):
+                    break
+            else:
+                index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
+                if (conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 1) or (not conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 0):
+                    continue
+                verifying_worlds.append(possible_world)
+        return verifying_worlds      
+
+    def calculate_falsifying_worlds(self, conditional):
+        falsifying_worlds = []
+        for possible_world in self.possible_worlds:
+            for proposition in conditional.antecedent:
+                index_of_propostion = self.variables.index(proposition.replace("!", ""))
+                if (proposition.__contains__("!") and possible_world[index_of_propostion] == 1) or (not proposition.__contains__("!") and possible_world[index_of_propostion] == 0):
+                    break
+            else:
+                index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
+                if (conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 0) or (not conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 1):
+                    continue
+                falsifying_worlds.append(possible_world)
+        return falsifying_worlds      
+
+
+    def calculating_k_i_constraint(self, conditional):
+        verifying_worlds = self.calculate_verifying_worlds(conditional)
+        falsifying_worlds = self.calculate_falsifying_worlds(conditional)
+        verification_sums = self.calculate_list_of_sums(verifying_worlds)
+        falsifying_sums = self.calculate_list_of_sums(falsifying_worlds)
+
+    def calculate_list_of_sums(self, worlds):
+        "calculate list of sums"
+
+
+
+
+    # Sentence([([proposition, proposition, ...], reward), ([proposition, proposition, ...], reward), ...], evidence)
+    # Belief Base list of Sentences
+    def create_conditionals(self, belief_base):
+        conditionals = []
+        for sentence in belief_base:
+            antecedent = []
+            for proposition in sentence.propositions[0][0]:
+                antecedent.append(proposition.variable)
+            conditional = Conditional(antecedent, sentence.propositions[0][1].value)
+            conditionals.append(conditional)
+        return conditionals
+
+
+
+# Just needed for ConditionalBeliefRevision
+# Conditional([antecedent,...], consequence)
+class Conditional:
+    def __init__(self, antecedent, consequence):
+        self.antecedent = antecedent
+        self.consequence = consequence
+
+# Belief Revision with Explanations
+# See: Explanations, belief revision and defeasible reasoning
+class KernelBeliefRevision(BeliefRevisionSystem):
+    
+    def __init__(self):
+        pass
+
+# Try https://github.com/opennars/Narjure
+class NARSBeliefRevision(BeliefRevisionSystem):
+    
+    def __init__(self):
+        pass
+ 
  

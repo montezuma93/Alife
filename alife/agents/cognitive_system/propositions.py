@@ -1,6 +1,6 @@
 from enum import Enum
 
-# Sentence([([color_proposition], reward)], evidence)
+# Sentence([([proposition, proposition, ...], reward), ([proposition, proposition, ...], reward), ...], evidence)
 class Sentence():
     def __init__(self, propositions: list, evidence: float):
         # Tuple
@@ -107,6 +107,15 @@ class EastOfProposition(SpatialProposition):
 def get_variable_names_for_propositions():
     return ["R", "T", "D"]
 
+def get_variable_names_for_color_propositions():
+    return ["G", "O", "B", "P"]
+
+def get_variable_names_for_reward_propositions():
+    return ["X"]
+
+def get_variable_names_for_all_propositions():
+    return get_variable_names_for_color_propositions() + get_variable_names_for_propositions() + get_variable_names_for_reward_propositions()
+    
 class Reward(Enum):
     toxic= "X"
     nontoxic= "!X"
