@@ -33,12 +33,18 @@ class WorkingMemoryWithActivationSpreading:
     def __init__(self):
         self.initial_activation_value = 1
         self.base_activation_decay = -0.5
+        self.include_percentage_evidence_value = 0
+
+    def set_include_percentage_evidence_value(self, include_percentage_evidence_value):
+        self.include_percentage_evidence_value = include_percentage_evidence_value
 
     def retrieve_knowledge(self, new_sentence: Sentence, stored_sentences: list, actual_time_step: int):
         self.init_activation_value_property(stored_sentences)
         if new_sentence:
             self.spread_activation(new_sentence, stored_sentences)
         self.add_calculated_base_activation(stored_sentences, actual_time_step)
+        if self.include_percentage_evidence_value > 0:
+            self.add_evidence_to_activation_value(stored_sentences)
         retrieval_threshold = self.calculate_threshold(stored_sentences)
         available_sentences = self.get_most_activated_sentences(stored_sentences, retrieval_threshold)
         return available_sentences
@@ -60,18 +66,26 @@ class WorkingMemoryWithActivationSpreading:
                     for sentence in sentence_receive_activation_fraction:
                         sentence.activation_value = sentence.activation_value + activation_value_to_add
 
+    def add_evidence_to_activation_value(self, stored_sentences):
+        for sentence in stored_sentences:
+            evidence_acitvation_value = sentence.evidence /100*self.include_percentage_evidence_value
+            print("evidence_acitvation_value", evidence_acitvation_value)
+            sentence.activation_value = sentence.activation_value + evidence_acitvation_value
+    
     def add_calculated_base_activation(self, stored_sentences, actual_time_step):
         for sentence in stored_sentences:
             sum_of_usages = 0
             for usage in sentence.usages:
                 sum_of_usages += power((actual_time_step - usage), self.base_activation_decay)
+            print("activation_spreading", sentence.activation_value)
             base_activation_value = log(sum_of_usages)
+            print("base_activation_value", base_activation_value)
             sentence.activation_value = sentence.activation_value + base_activation_value
-            print("total", sentence, sentence.activation_value)
 
     def calculate_threshold(self, stored_sentences):
         total_activation_value = 0
         for sentence in stored_sentences:
+            print("total", sentence.activation_value)
             total_activation_value = total_activation_value + sentence.activation_value
         average_activation = total_activation_value/len(stored_sentences)
         return average_activation
