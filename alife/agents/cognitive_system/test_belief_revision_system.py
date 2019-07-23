@@ -6,7 +6,7 @@ from .belief_revision_system import *
 
 
 class BeliefRevisionTest(TestCase):
-
+    
     ############################### FORMAL BELIEF REVISION ##############################################
 
     def test_calculate_rank_formal_belief_revision_without_closed_world_assumption(self):
@@ -65,6 +65,17 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(1, len(revised_belief_base[2].propositions))
         self.assertEqual(2, len(revised_belief_base[3].propositions))
         self.assertEqual(1, len(revised_belief_base[4].propositions))
+
+    def test_formal_belief_revision_with_empty_belief_base(self):
+        self.belief_revision_system = FormalBeliefRevision()
+        self.belief_revision_system.set_closed_world_assumption(False)
+
+        sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 2)
+        old_belief_base = []
+
+        revised_belief_base = self.belief_revision_system.revise_belief_base(sentence, old_belief_base)
+
+        self.assertEqual(1, len(revised_belief_base))
 
     def test_formal_belief_revision_with_closed_world_assumption_and_b_m_should_be_equal_to_1(self):
         self.belief_revision_system = FormalBeliefRevision()
@@ -348,17 +359,41 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual([1,0,0,0,1,0,1,0], falsifying_worlds[0])
         self.assertEqual([1,0,0,0,1,1,1,0], falsifying_worlds[1])
 
-    '''
-    def test_calculating_k_i_constraint(self):
+    def test_calculate_list_of_sums_for_k_i_and_falsifying_worlds(self):
         self.belief_revision_system = ConditionalBeliefRevision()
 
         old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
          Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
 
         self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_all_possible_worlds()
+        self.belief_revision_system.create_possible_worlds()
         conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
 
-        calcualted_k_i_constraint = self.belief_revision_system.calculating_k_i_constraint(conditionals[0])
+        falsifying_worlds = self.belief_revision_system.calculate_falsifying_worlds(conditionals[0])
+        # Calculate all k_j for index i for falsifyied worlds
+        list_of_sums_k_0 = self.belief_revision_system.calculate_list_of_sums(0, conditionals, falsifying_worlds)
+        list_of_sums_k_1 = self.belief_revision_system.calculate_list_of_sums(1, conditionals, falsifying_worlds)
 
-    '''
+
+    def test_calculate_list_of_sums_for_k_i_and_verified_worlds(self):
+        self.belief_revision_system = ConditionalBeliefRevision()
+
+        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
+        self.belief_revision_system.create_possible_worlds()
+        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
+
+        verified_worlds = self.belief_revision_system.calculate_verifying_worlds(conditionals[0])
+        # Calculate all k_j for index i for falsifyied worlds
+        list_of_sums_k_0 = self.belief_revision_system.calculate_list_of_sums(0, conditionals, verified_worlds)
+        list_of_sums_k_1 = self.belief_revision_system.calculate_list_of_sums(1, conditionals, verified_worlds)
+
+    def test_create_constraints(self):
+        self.belief_revision_system = ConditionalBeliefRevision()
+
+        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+
+        constraints = self.belief_revision_system.calculate_kappa_values(old_belief_base)

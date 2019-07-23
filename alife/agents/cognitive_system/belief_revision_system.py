@@ -1,6 +1,7 @@
 import itertools
 from .truths.truthtable import *
 from.propositions import *
+import sys
 
 class BeliefRevisionSystem:
 
@@ -17,6 +18,9 @@ class FormalBeliefRevision(BeliefRevisionSystem):
 
     def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
         revised_belief_base = []
+        if len(belief_base) == 0:
+            revised_belief_base.append(new_sentence)
+            return revised_belief_base
         negative_rank = self.calculate_rank(new_sentence, belief_base)
 
         for sentence in belief_base:
@@ -281,16 +285,19 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
         self.calculate_kappa_values(belief_base)
 
     def calculate_kappa_values(self, belief_base):       
-        self.variables = get_variable_names_for_all_propositions
-        create_possible_worlds()
+        self.variables = get_variable_names_for_all_propositions()
+        self.create_possible_worlds()
         # indicies = length of belief_base or length of conditionals and is given
         conditionals = self.create_conditionals(belief_base)
-        constraints = self.create_constraints(conditionals)
+        kappa_vector = [None] * len(conditionals)
+        # Ki entries: [([for each verified world: [k_j which falsify i],[],..], for each falsified world: [k_j which falsify i],[],..] ), ()]
+        constraints = self.create_constraints(conditionals, kappa_vector)
+        print(constraints)
 
-    def create_constraints(self, conditionals):
+    def create_constraints(self, conditionals, kappa_vector):
         constraints = []
-        for conditional in conditionals:
-            k_i_constraint = self.calculating_k_i_constraint(conditional)
+        for index, conditional in enumerate(conditionals):
+            k_i_constraint = self.calculating_k_i_constraint(index, conditional, conditionals, kappa_vector)
             constraints.append(k_i_constraint)
         return constraints
     
@@ -333,14 +340,45 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
         return falsifying_worlds      
 
 
-    def calculating_k_i_constraint(self, conditional):
+    def calculating_k_i_constraint(self, index, conditional, conditionals, kappa_vector):
+        # All worlds verifying i-th conditional
         verifying_worlds = self.calculate_verifying_worlds(conditional)
+        # All worlds falsifying i-th conditional
         falsifying_worlds = self.calculate_falsifying_worlds(conditional)
-        verification_sums = self.calculate_list_of_sums(verifying_worlds)
-        falsifying_sums = self.calculate_list_of_sums(falsifying_worlds)
 
-    def calculate_list_of_sums(self, worlds):
-        "calculate list of sums"
+        verification_sums = self.calculate_list_of_sums(index, conditionals, verifying_worlds)
+        falsifying_sums = self.calculate_list_of_sums(index, conditionals, falsifying_worlds)
+
+        print("conditional", conditional.antecedent)
+        print("conditional", conditional.consequence)
+        print(verifying_worlds)
+        print(falsifying_worlds)
+        print(verification_sums)
+        print(falsifying_sums)
+        # Calculating mimimum
+
+        return (verification_sums, falsifying_sums)
+
+
+    def calculate_list_of_sums(self, i_index, conditionals, worlds):
+        list_of_sums = []
+        for world in worlds:
+            sum_of_kappa_j = []
+            for index, conditional in enumerate(conditionals):
+                if index != i_index:
+                    for proposition in conditional.antecedent:
+                        index_of_propostion = self.variables.index(proposition.replace("!", ""))
+                        if (proposition.__contains__("!") and world[index_of_propostion] == 1) or (not proposition.__contains__("!") and world[index_of_propostion] == 0):
+                            break
+                    else:
+                        index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
+                        if (conditional.consequence.__contains__("!") and world[index_of_propostion] == 0) or (not conditional.consequence.__contains__("!") and world[index_of_propostion] == 1):
+                            continue
+                        sum_of_kappa_j.append(index)
+            list_of_sums.append(sum_of_kappa_j)
+        return list_of_sums
+        
+
 
 
 
