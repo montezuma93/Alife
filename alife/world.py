@@ -214,6 +214,7 @@ class World:
             row_to_add = [key] + list(row.values())     
             x.add_row(row_to_add)
         f.write(x.get_string())
+        f.write("\r\n")
         f.close()
 
         ## MAIN LOOP ##
@@ -351,16 +352,21 @@ class World:
             dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
-            
+
+            # To let plant grow consistently
+            '''
             for plant_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
                 if step % get_conf(section='world')['growth_rate']['ID_' + str(plant_type)] == 0:
                     p = self.random_position()
                     if p is not None and len(self.plants) < 1000:
                         Thing(p, mass=100+random.rand()*cfg['max_plant_size'], ID=plant_type)
                     banner = get_banner("t=%d; %d bugs" % (step,len(self.creatures)))
-                    print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
+                    
+            '''
+            
             day_timer = day_timer + 1
             if day_timer >= 400:
+                print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
                 self.IS_DAY_TIME = not self.IS_DAY_TIME
                 day_timer = 0
 
@@ -421,7 +427,7 @@ class World:
             cfg_world = config_file['world']
             cfg_objects = config_file['objects']
             for growth_rate in cfg_world['growth_rate']:
-                cfg_world['growth_rate'][growth_rate] = random.randint(1, 1000)
+                cfg_world['growth_rate'][growth_rate] = 0
             cfg_objects['toxic_damage'] = random.uniform(10, 50)
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)

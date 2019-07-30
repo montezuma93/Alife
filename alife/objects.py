@@ -270,7 +270,7 @@ class Creature(Thing):
 
         # Starve?
         if self.energy < 10:
-            Thing(self.pos + random.randn(2)*10., mass=20, ID=ID_PLANT)
+            # Thing(self.pos + random.randn(2)*10., mass=20, ID=ID_PLANT)
             self.kill()
             return
 

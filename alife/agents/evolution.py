@@ -154,10 +154,7 @@ class CognitiveEnvolver(Agent):
         self.generation = 1
 
         #Create cognitive system
-        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"), kwargs.get("ClosedWorldAssumption"))
-        
-        print(self.cognitive_system.long_term_memory)
-        print(self.cognitive_system.observation_to_proposition_system)
+        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("ClosedWorldAssumption"))
         
 
     def act(self, obs, nearby_objects, is_day_time, reward,done=False):
@@ -183,8 +180,9 @@ class CognitiveEnvolver(Agent):
         propositions = None
         if actual_reward:
             propositions = self._cast_to_proposition(nearby_objects, is_day_time)
-
         self.cognitive_system.act(propositions, actual_reward)
+
+        # Need to be changed in fucture, cause will be done by cogntive system
         return self.h.predict(obs)
     
 

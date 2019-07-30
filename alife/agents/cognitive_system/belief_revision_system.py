@@ -10,8 +10,8 @@ class BeliefRevisionSystem:
 
 class FormalBeliefRevision(BeliefRevisionSystem):
 
-    def __init__(self):
-        self.closed_world_assumption = False
+    def __init__(self, closed_world_assumption, belief_revision_system_args):
+        self.closed_world_assumption = closed_world_assumption
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption
@@ -194,15 +194,15 @@ class FormalBeliefRevision(BeliefRevisionSystem):
   
 class ProbabilityBeliefRevision(BeliefRevisionSystem):
 
-    def __init__(self):
+    def __init__(self, closed_world_assumption, belief_revision_system_args):
         # ALl observed data, will be added to this dict. Key will be the Propositions. 
         # For example: Rock and Green Plant <-> Toxic, will lead to key RGT.
         # The value for that entry will be the amount of observations for that key. 
         # If probability for that Propositions was 1/4, the value will be increased by 0.25
         self.observed_data = {}
         self.pseudo_sample_size = 10
-        self.closed_world_assumption = False
-        self.uses_occams_razor_principle = False
+        self.closed_world_assumption = closed_world_assumption
+        self.uses_occams_razor_principle = belief_revision_system_args[0]
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption
@@ -278,8 +278,8 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
 # See Towards a General framework of Kinds of Forgetting in Common-Sense Belief Management
 class ConditionalBeliefRevision(BeliefRevisionSystem):
     
-    def __init__(self):
-        pass
+    def __init__(self, closed_world_assumption, belief_revision_system_args):
+        self.closed_world_assumption = closed_world_assumption
 
     def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
         self.calculate_kappa_values(belief_base)
@@ -292,7 +292,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
         kappa_vector = [None] * len(conditionals)
         # Ki entries: [([for each verified world: [k_j which falsify i],[],..], for each falsified world: [k_j which falsify i],[],..] ), ()]
         constraints = self.create_constraints(conditionals, kappa_vector)
-        print(constraints)
 
     def create_constraints(self, conditionals, kappa_vector):
         constraints = []
@@ -339,7 +338,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 falsifying_worlds.append(possible_world)
         return falsifying_worlds      
 
-
     def calculating_k_i_constraint(self, index, conditional, conditionals, kappa_vector):
         # All worlds verifying i-th conditional
         verifying_worlds = self.calculate_verifying_worlds(conditional)
@@ -348,17 +346,9 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
 
         verification_sums = self.calculate_list_of_sums(index, conditionals, verifying_worlds)
         falsifying_sums = self.calculate_list_of_sums(index, conditionals, falsifying_worlds)
-
-        print("conditional", conditional.antecedent)
-        print("conditional", conditional.consequence)
-        print(verifying_worlds)
-        print(falsifying_worlds)
-        print(verification_sums)
-        print(falsifying_sums)
         # Calculating mimimum
 
         return (verification_sums, falsifying_sums)
-
 
     def calculate_list_of_sums(self, i_index, conditionals, worlds):
         list_of_sums = []
@@ -377,10 +367,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                         sum_of_kappa_j.append(index)
             list_of_sums.append(sum_of_kappa_j)
         return list_of_sums
-        
-
-
-
 
 
     # Sentence([([proposition, proposition, ...], reward), ([proposition, proposition, ...], reward), ...], evidence)
@@ -394,8 +380,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             conditional = Conditional(antecedent, sentence.propositions[0][1].value)
             conditionals.append(conditional)
         return conditionals
-
-
 
 # Just needed for ConditionalBeliefRevision
 # Conditional([antecedent,...], consequence)
@@ -416,5 +400,4 @@ class NARSBeliefRevision(BeliefRevisionSystem):
     
     def __init__(self):
         pass
- 
  

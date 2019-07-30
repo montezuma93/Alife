@@ -69,7 +69,6 @@ class WorkingMemoryWithActivationSpreading:
     def add_evidence_to_activation_value(self, stored_sentences):
         for sentence in stored_sentences:
             evidence_acitvation_value = sentence.evidence /100*self.include_percentage_evidence_value
-            print("evidence_acitvation_value", evidence_acitvation_value)
             sentence.activation_value = sentence.activation_value + evidence_acitvation_value
     
     def add_calculated_base_activation(self, stored_sentences, actual_time_step):
@@ -77,15 +76,12 @@ class WorkingMemoryWithActivationSpreading:
             sum_of_usages = 0
             for usage in sentence.usages:
                 sum_of_usages += power((actual_time_step - usage), self.base_activation_decay)
-            print("activation_spreading", sentence.activation_value)
             base_activation_value = log(sum_of_usages)
-            print("base_activation_value", base_activation_value)
             sentence.activation_value = sentence.activation_value + base_activation_value
 
     def calculate_threshold(self, stored_sentences):
         total_activation_value = 0
         for sentence in stored_sentences:
-            print("total", sentence.activation_value)
             total_activation_value = total_activation_value + sentence.activation_value
         average_activation = total_activation_value/len(stored_sentences)
         return average_activation
