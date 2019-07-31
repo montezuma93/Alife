@@ -51,8 +51,6 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
             utility = utility_table[key]
             weightning = ((self.delta + 0.5 - self.risk_aversion) * math.pow(weightning_table[key],self.gamma))
             solution_table[key] = utility * weightning
-        for key, value in solution_table.items():
-            print(key, value)
         return solution_to_action_mapping.get(max(solution_table.items(), key=operator.itemgetter(1))[0])
 
     def observation_is_in_sentence(self, observation, sentence):
@@ -93,7 +91,6 @@ class QLearningDecisionMakingSystem:
         choice = random.choices(population=["BestAction", "Random"], weights=[1-self.exploration_probability, self.exploration_probability], k=1)
 
         if choice[0] == "BestAction":
-            print(choice)
             return max(self.q_table[key].items(), key=operator.itemgetter(1))[0]
         else:
             return random.choice(list(self.q_table[key].keys()))
