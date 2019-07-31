@@ -27,6 +27,7 @@ class FormalBeliefRevision(BeliefRevisionSystem):
             if sentence.evidence > negative_rank:
                 revised_belief_base.append(sentence)
             # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
+            # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
             merged_sentence = Sentence(sentence.propositions + new_sentence.propositions, max(sentence.evidence + 1, new_sentence.evidence))
             revised_belief_base.append(merged_sentence)
         revised_belief_base.append(new_sentence)
