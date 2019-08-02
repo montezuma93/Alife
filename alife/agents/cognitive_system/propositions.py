@@ -7,6 +7,16 @@ class Sentence():
         self.propositions = propositions
         self.evidence = evidence
 
+    def __str__(self):
+        or_sentences = []
+        for sentence in self.propositions:
+            proposition_ands = "^".join([proposition.name for proposition in sentence[0]])
+            reward = sentence[1]
+            or_sentences.append("propositions: {0}, reward: {1} ".format(proposition_ands, reward))
+        
+        
+        return "Sentence: {0}, evidence: {1} ".format("v".join(or_sentences), self.evidence)
+
 class Proposition():
     def __init__(self):
         pass
@@ -119,3 +129,4 @@ def get_variable_names_for_all_propositions():
 class Reward(Enum):
     toxic= "X"
     nontoxic= "!X"
+    none="~"

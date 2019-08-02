@@ -1,5 +1,5 @@
 from alife.agents.agent import Agent
-from numpy import zeros, dot, clip, zeros, tanh, dot
+from numpy import zeros, dot, clip, zeros, tanh, dot, unique
 from numpy.random import rand, randn, choice
 from alife.agents.models import SLP, MLP, ESN
 import numpy as np
@@ -154,7 +154,10 @@ class CognitiveEnvolver(Agent):
         self.generation = 1
 
         #Create cognitive system
-        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("ClosedWorldAssumption"))
+        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"),
+         kwargs.get("BeliefRevisionSystem"), kwargs.get("WorkingMemorySystem"),
+          kwargs.get("DecisionMakingSystem"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("DecisionMakingSystem_Args"), 
+           kwargs.get("ClosedWorldAssumption"))
         
 
     def act(self, obs, nearby_objects, is_day_time, reward,done=False):
@@ -175,16 +178,13 @@ class CognitiveEnvolver(Agent):
             A number array of length L 
                 (the action to take)
         """
-        #Create prposition
+        # Merge nearby objects
+        merged_nearby_objects = list(set().union(nearby_objects[0], nearby_objects[1],nearby_objects[2]))
+        # Create prposition
         actual_reward = self._cast_to_reward(reward)
-        propositions = None
-        if actual_reward:
-            propositions = self._cast_to_proposition(nearby_objects, is_day_time)
-        self.cognitive_system.act(propositions, actual_reward)
-
-        # Need to be changed in fucture, cause will be done by cogntive system
-        return self.h.predict(obs)
-    
+        propositions = self._cast_to_proposition(merged_nearby_objects, is_day_time)
+        action = self.cognitive_system.act(self, propositions[0], propositions[1], actual_reward)
+        return action
 
     def _cast_to_reward(self, reward):
         if reward > 0:
@@ -192,10 +192,11 @@ class CognitiveEnvolver(Agent):
         elif reward <= -10:
             return Reward.toxic
         else:
-            return None
+            return Reward.none
 
     def _cast_to_proposition(self,nearby_objects, is_day_time):
         propositions = []
+        color_proposition = None
         id_to_proposition_mapping = {
             1: NextToRock(),
             2: NextToTreeTrunk(),
@@ -216,7 +217,7 @@ class CognitiveEnvolver(Agent):
         if is_day_time:
             return DayProposition()
         else:
-            return NightProposition
+            return NightProposition()
 
     
     def copy(self):

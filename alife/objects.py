@@ -7,6 +7,8 @@ from graphics import rgb2color, id2rgb, COLOR_BLACK, COLOR_WHITE
 from graphics import draw_banner
 from agents.spaces import BugSpace # the space of the environment (for the agent)
 from agents.agent import Agent 
+
+from agents.cognitive_system.action import Action
 set_printoptions(precision=4)
 
 # Types of Sprites/Things/Objects
@@ -283,7 +285,6 @@ class Creature(Thing):
         self.observation[IDX_PROBE2],o2,t2 = world.collision_to_vision(self.pos+self.pa2,self.radius*3.,self)
 
         #Get nearby objects
-        #Print get day and night
         nearby_objects = get_nearby_objects(self, world)
 
         # Unless we are flying, we will collide with any objects we overlap with
@@ -308,23 +309,78 @@ class Creature(Thing):
         action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward) # call upon the agent to act
         if self.selected is not None:
             action = self.selected
-
+        else:
+            # Map chosen action to new action
+            action = self.map_chosen_action_to_angle_and_speed(action, nearby_objects)
         # Carry out the actions on the World
         self.env_step(action)
 
         # Wrap around the world
         self.wrap(world)
 
+    def map_chosen_action_to_angle_and_speed(self, action, nearby_objects):
+        # Nearby object helps to find out the angle to choose
+        # nearby_objects[0] = Main | nearby_objects[1] = Left | nearby_objects[2] = Right 
+
+        # Return action with angle and speed
+        # Possible actions:
+        # Move towards -> Eat
+        # Move elsewhere -> Not Eat
+        angle = 0
+        speed = 0
+        # Calculate angle to the plant
+        if action.name == Action.move_towards.name:
+            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = 0
+                speed = 3
+            # Turn to the left
+            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
+                angle = -0.1
+                speed = 0
+            # Turn to the right
+            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = 0.1
+                speed = 0
+            else:
+                angle = 0
+                speed = 1
+        # Calculate the oposite angle to the plant
+        elif action.name == Action.move_elsewhere.name:
+            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = math.pi
+                speed = 3
+            # Turn to the right
+            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
+                angle = 0.1
+                speed = 0
+            # Turn to the left
+            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = -0.1
+                speed = 0
+            else:
+                angle = math.pi
+                speed = 1
+        # TODO Prefere Places where bug not have been before, will be done after adding Spatial Knowledge
+        elif action.name == Action.random.name:
+            angle = random.uniform(-pi, pi)
+            speed = 1
+        # The moment after revising and updating policies
+        else:
+            angle = 0
+            speed = 0
+
+
+        return (angle, speed)
+        
     def env_step(self,action):
         '''
             Process actions on the environment.
 
             Using action[0] (angle) and action[1] (speed) component.
         '''
-
         # Only allow a certain range of actions in this environment
-        angle = clip(action[IDX_ANGLE], action_space.low[0], action_space.high[0])
-        speed = clip(action[IDX_SPEED], action_space.low[1], action_space.high[1])
+        angle = clip(action[0], action_space.low[0], action_space.high[0])
+        speed = clip(action[1], action_space.low[1], action_space.high[1])
         # New velocity vector
         if angle < -0.01 or angle > 0.01:
             self.unitv = rotate(self.unitv,angle)
@@ -338,7 +394,10 @@ class Creature(Thing):
         self.pos = self.pos + self.unitv * self.speed
         self.speed = abs(self.speed)
         # Divide (if we are DIVIDE_LIMIT times over the limit)
-        if self.energy > (self.energy_limit * DIVIDE_LIMIT):
+
+        # I dont need divide
+        creature_should_be_able_to_divide = False
+        if self.energy > (self.energy_limit * DIVIDE_LIMIT) and creature_should_be_able_to_divide:
             # Pass on half of spare energy to the child
             spare_energy = (self.energy_limit * DIVIDE_LIMIT) - self.energy_limit
             energy_loss = spare_energy/2.
@@ -383,7 +442,9 @@ class Creature(Thing):
 
 
 def get_nearby_objects(agent, world):
-    nearby_objects = []
+    nearby_objects_main = []
+    nearby_objects_left = []
+    nearby_objects_right = []
     # world get grid and all objects nearby
     # We are currently in grid square (x,y)
     grid_x, grid_y = world.pos2grid(agent.pos)
@@ -398,7 +459,13 @@ def get_nearby_objects(agent, world):
                 # Just consider rock and tree trunks
                 if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK or things[i].ID in PLANT_IDS:
                     # ... how much overlap with the this thing?
-                    olap = overlap(agent.pos,agent.radius*3,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos,agent.radius*2,things[i].pos,things[i].radius)
                     if(olap > 0):
-                        nearby_objects.append(things[i].ID) if things[i].ID not in nearby_objects else nearby_objects
-    return nearby_objects
+                        nearby_objects_main.append(things[i].ID) if things[i].ID not in nearby_objects_main else nearby_objects_main
+                    olap = overlap(agent.pos+agent.pa1,agent.radius*1.2,things[i].pos,things[i].radius)
+                    if(olap > 0):
+                        nearby_objects_right.append(things[i].ID) if things[i].ID not in nearby_objects_right else nearby_objects_right
+                    olap = overlap(agent.pos+agent.pa2,agent.radius*2,things[i].pos,things[i].radius)
+                    if(olap > 0):
+                        nearby_objects_left.append(things[i].ID) if things[i].ID not in nearby_objects_left else nearby_objects_left
+    return (nearby_objects_main, nearby_objects_left, nearby_objects_right)

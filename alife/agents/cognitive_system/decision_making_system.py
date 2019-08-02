@@ -1,4 +1,5 @@
 from .propositions import *
+from .action import Action
 from .long_term_memory import LongTermMemory
 import copy
 import math
@@ -8,8 +9,8 @@ import random
 # See: Towards agents with human-like decisions under uncertainty
 class HumanLikeDecisionMakingUnderUncertaintySystem:
 
-    def __init__(self, risk_aversion):
-        self.risk_aversion = risk_aversion
+    def __init__(self, decision_making_system_args):
+        self.risk_aversion = int(decision_making_system_args[0])
         self.epsilon = 0.001
         self.delta = 0.77
         self.gamma = 0.44
@@ -29,8 +30,8 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
             "eat toxic":0 # not eat
         }
         solution_to_action_mapping = {
-            "eat nontoxic":"eat",
-            "eat toxic":"not eat"
+            "eat nontoxic": Action.move_towards,
+            "eat toxic": Action.move_elsewhere
         }
         sentences = self.normalize_sentences(available_sentences)
         evidence_for_toxic = 0
@@ -49,7 +50,8 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
 
         for key in solution_table.keys():
             utility = utility_table[key]
-            weightning = ((self.delta + 0.5 - self.risk_aversion) * math.pow(weightning_table[key],self.gamma))
+            weightning = ((self.delta + 0.5 - self.risk_aversion) * math.pow(weightning_table[key],self.gamma)) / (
+                ((self.delta + 0.5 - self.risk_aversion) * math.pow(weightning_table[key],self.gamma)) +  math.pow((1-weightning_table[key]),self.gamma))
             solution_table[key] = utility * weightning
         return solution_to_action_mapping.get(max(solution_table.items(), key=operator.itemgetter(1))[0])
 
@@ -65,43 +67,61 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         else:
             return False
 
-
+    # Heighest value should be 1- epsilon
     def normalize_sentences(self, sentences_to_normalize):
         sentences = []
-        total_weight = sum([sentence.evidence for sentence in sentences_to_normalize])
-        for sentence in sentences_to_normalize:
-            normalized_sentence = copy.copy(sentence)
-            normalized_sentence.evidence = sentence.evidence / total_weight
-            sentences.append(normalized_sentence)
+        if len(sentences_to_normalize) > 0:
+            max_value = max([sentence.evidence for sentence in sentences_to_normalize])
+            dividing_factor = max_value / (1-self.epsilon)
+            for sentence in sentences_to_normalize:
+                normalized_sentence = copy.copy(sentence)
+                normalized_sentence.evidence = sentence.evidence / dividing_factor
+                sentences.append(normalized_sentence)
         return sentences
 
-
+    def update_policy(self, reward, next_observation, next_available_sentences):
+        # No need to update policy for that kind of decision making
+        pass
 
 class QLearningDecisionMakingSystem:
 
     def __init__(self):
+        self.learning_rate = 0.1
+        self.discount_factor = 0.9
         self.q_table = {}
         self.exploration_probability = 0
+        self.last_action_chosen = None
+        self.last_state_key = None
 
     def make_decision(self, observations, available_sentences):
         key = self.create_key(observations, available_sentences)
         if key not in self.q_table:
-            self.q_table[key] = {"Eat":0, "NotEat":0}
+            self.add_state(key)
         
         choice = random.choices(population=["BestAction", "Random"], weights=[1-self.exploration_probability, self.exploration_probability], k=1)
-
         if choice[0] == "BestAction":
-            return max(self.q_table[key].items(), key=operator.itemgetter(1))[0]
+            max_value = max(self.q_table[key].items(), key=lambda x: x[1])
+            list_of_actions = []
+            for action, reward in self.q_table[key].items():
+                if reward == max_value[1]:
+                    list_of_actions.append(action)
+            action = random.choice(list_of_actions)
         else:
-            return random.choice(list(self.q_table[key].keys()))
+            action = random.choice(list(self.q_table[key].keys()))
+        self.last_action_chosen = action
+        self.last_state_key = key
+        return action
+
+    def add_state(self, key):
+        self.q_table[key] = {Action.move_towards:0, Action.move_elsewhere:0}
 
     def create_key(self, observations, available_sentences):
-        longest_observation = []
+        longest_observation = None
         for observation in observations:
-            if len(observation) > len(longest_observation):
+            if longest_observation is None or len(observation.propositions[0][0]) > len(longest_observation.propositions[0][0]):
                 longest_observation = observation
         key = "O:"
-        for proposition in longest_observation:
+        for proposition in longest_observation.propositions[0][0]:
             key = key + proposition.variable
         key = key + "|B:"
 
@@ -114,3 +134,20 @@ class QLearningDecisionMakingSystem:
                 key = key + ","
         return key[:-1]
  
+    def update_policy(self, reward, next_observation, next_available_sentences):
+        next_state = self.create_key(next_observation, next_available_sentences)
+        maximum_future_reward = self.get_maximum_reward_for_next_sate(next_state)
+
+        self.q_table[self.last_state_key][self.last_action_chosen] = ((1-self.learning_rate) * self.q_table[self.last_state_key][self.last_action_chosen] +
+         self.learning_rate * (reward + self.discount_factor * maximum_future_reward))
+
+    def get_maximum_reward_for_next_sate(self, next_state):
+        maximum_reward = 0
+        if next_state not in self.q_table:
+            self.add_state(next_state)
+            return 0
+        actions = self.q_table[next_state]
+        for action, reward in actions.items():
+            if reward > maximum_reward:
+                maximum_reward = reward
+        return maximum_reward

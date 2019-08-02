@@ -4,11 +4,11 @@ import math
 from numpy import log, power
 
 
-class WorkingMemory:
+class WorkingMemoryWithEvidence:
 
     def __init__(self):
         #Between 1 and 100
-        self.percentage_amount_for_retrieving = 100
+        self.percentage_amount_for_retrieving = 10
 
     def set_percentage_amount_for_retrieving(self, percentage_amount_for_retrieving):
         if percentage_amount_for_retrieving < 1 or percentage_amount_for_retrieving > 100:
@@ -21,7 +21,7 @@ class WorkingMemory:
         amount_of_sentences_to_return = math.ceil(total_amount_of_sentences /100 * self.percentage_amount_for_retrieving)
         available_sentences = []
         for sentence in stored_sentences:
-            if len(available_sentences) <= amount_of_sentences_to_return or available_sentences[-1].evidence == sentence.evidence:
+            if len(available_sentences) < amount_of_sentences_to_return or available_sentences[-1].evidence == sentence.evidence:
                 available_sentences.append(sentence)
             else:
                 break
