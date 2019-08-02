@@ -89,3 +89,7 @@ def angles_of_attack(obj_1, obj_2):
     return [arccos(dot(unitv(obj_2.pos - obj_1.pos),obj_1.unitv)), 
             arccos(dot(unitv(obj_1.pos - obj_2.pos),obj_2.unitv))]
 
+
+def calculate_distance(x1,y1,x2,y2):  
+    dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)  
+    return dist  

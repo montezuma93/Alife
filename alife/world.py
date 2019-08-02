@@ -180,10 +180,10 @@ class World:
         
         # Some rocks and plants
         FACTOR = init_sprites
-        for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
-            Thing(self.random_position(), mass=100+random.rand()*1000, ID=ID_ROCK)
-        for i in range(int(self.N_ROWS*FACTOR/5*self.N_COLS)):
-            Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
+        #for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
+            #Thing(self.random_position(), mass=100+random.rand()*1000, ID=ID_ROCK)
+        #for i in range(int(self.N_ROWS*FACTOR/5*self.N_COLS)):
+            #Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
 
         # Get a list of the agents we may deploy 
         agents = get_conf(section='bugs').values()
@@ -413,13 +413,22 @@ class World:
                 pygame.time.delay(self.FPS)
 
     def create_things_and_creatures(self, max_plant_size, agents):
-        #Add rocks and tree trunks
-        for thing_type in (ID_ROCK, ID_TREE_TRUNK):
-            for i in range(random.randint(0,9)):
-                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
+        positions_used_plants = []
         for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
             for i in range(random.randint(0,9)):
-                Thing(self.random_position(), mass=100 + random.rand()*max_plant_size, ID=thing_type)
+                random_position = self.random_position(positions_used_plants = positions_used_plants)
+                positions_used_plants.append(random_position)
+                Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
+                #Add rocks and tree trunks
+        for thing_type in (ID_ROCK, ID_TREE_TRUNK):
+            positions_used_objects = []
+            for i in range(random.randint(0,9)):
+                random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
+                positions_used_objects.append(random_position)
+                Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
+
+        for r in self.allSprites:
+            self.add_to_register(r)
         
     def adjust_settings(self, filename='conf.yml'):
         with open(filename) as file:
@@ -449,17 +458,39 @@ class World:
                 'night_': random.choice(plants_toxicity)
             }      
 
-    def random_position(self, on_empty=False):
+    def random_position(self, on_empty=False, positions_used_plants = [], positions_used_objects = None,  ):
         ''' Find a random position somewhere on the screen over land tiles
             (if specified -- only on an empty tile) '''
-        j_list = list(range(self.terrain.shape[0]))
-        random.shuffle(j_list)
-        k_list = list(range(self.terrain.shape[1]))
-        random.shuffle(k_list)
-        for j in j_list:
-            for k in k_list:
-                if not (self.terrain[j,k] > 0) and not (self.regcount[k,j] > 0 and on_empty):
-                    return self.grid2pos((k,j)) + random.rand(2) * TILE_SIZE - TILE_SIZE*0.5
+        # For adding things like rock and tree, Want them close to a plant
+        if positions_used_objects is not None:
+            distance_is_wrong = False
+            point = positions_used_plants[np.random.randint(0 , len(positions_used_plants)-1)]
+            calculated_point_x = np.random.uniform(point[0] -20 , point[0] +20)
+            calculated_point_y = np.random.uniform(point[1] -20 , point[1] +20)
+            distance_to_plant = calculate_distance(calculated_point_x, point[0],calculated_point_y, point[1])
+            for point_of_object in positions_used_objects:
+                distance_to_object = calculate_distance(calculated_point_x, point_of_object[0], calculated_point_y, point_of_object[1])     
+                if distance_to_object < 20 and distance_to_plant < 10 and distance_to_plant > 30:
+                    distance_is_wrong = True
+            if not distance_is_wrong:
+                return array([calculated_point_x, calculated_point_y])
+        # For all other case, for adding plants
+        else:
+            j_list = list(range(self.terrain.shape[0]))
+            random.shuffle(j_list)
+            k_list = list(range(self.terrain.shape[1]))
+            random.shuffle(k_list)
+            for j in j_list:
+                for k in k_list:
+                    if not (self.terrain[j,k] > 0) and not (self.regcount[k,j] > 0 and on_empty):
+                        calculated_position = self.grid2pos((k,j)) + random.rand(2) * TILE_SIZE - TILE_SIZE*0.5
+                        distance_is_wrong = False
+                        for point in positions_used_plants:
+                            distance = calculate_distance(point[0], point[1],calculated_position[0], calculated_position[1])
+                            if distance < 100:
+                                distance_is_wrong = True
+                        if not distance_is_wrong:
+                            return calculated_position
         # There are no empty tiles
         print("Warning: No empty tiles to place stuff on")
         return self.random_position(on_empty=False)
