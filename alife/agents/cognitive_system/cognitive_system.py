@@ -8,41 +8,39 @@ import logging
 
 class Cognitive_System():
 
-    def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str, belief_revision_system_args, decision_making_system_args, closed_world_assumption: str):
+    def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str,
+         observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args):
         logging.basicConfig(filename="log.txt",
                                     filemode='a',
                                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                                     datefmt='%H:%M:%S',
                                     level=logging.INFO)
         logging.info("\r\n")
-        
-
-        closed_world_assumption = True if closed_world_assumption == "True" else False
 
         if observation_to_proposition_system == "MultiplePropositionSystem":
-            self.observation_to_proposition_system = MultiplePropositionSystem()
+            self.observation_to_proposition_system = MultiplePropositionSystem(observation_to_proposition_system_args)
         elif observation_to_proposition_system == "OccamsRazorMultiplePropositionSystem":
-            self.observation_to_proposition_system = OccamsRazorMultiplePropositionSystem()
+            self.observation_to_proposition_system = OccamsRazorMultiplePropositionSystem(observation_to_proposition_system_args)
         elif observation_to_proposition_system == "SinglePropositionSystem":
-            self.observation_to_proposition_system = SinglePropositionSystem()
+            self.observation_to_proposition_system = SinglePropositionSystem(observation_to_proposition_system_args)
         elif observation_to_proposition_system == "RandomSinglePropositionSystem":
-            self.observation_to_proposition_system = RandomSinglePropositionSystem()
+            self.observation_to_proposition_system = RandomSinglePropositionSystem(observation_to_proposition_system_args)
         else:
             print("Observation System not found")
 
         if belief_revision_system == "FormalBeliefRevision":
-            self.belief_revision_system = FormalBeliefRevision(closed_world_assumption, belief_revision_system_args)
+            self.belief_revision_system = FormalBeliefRevision(belief_revision_system_args)
         elif belief_revision_system == "ProbabilityBeliefRevision":
-            self.belief_revision_system = ProbabilityBeliefRevision(closed_world_assumption, belief_revision_system_args)
+            self.belief_revision_system = ProbabilityBeliefRevision(belief_revision_system_args)
         elif belief_revision_system == "RandomSinglePropositionSystem":
-            self.belief_revision_system = ConditionalBeliefRevision(closed_world_assumption, belief_revision_system_args)
+            self.belief_revision_system = ConditionalBeliefRevision(belief_revision_system_args)
         else:
             print("Belief Revision System not found")
         
         if working_memory_system == "WorkingMemoryWithEvidence":
-            self.working_memory_system = WorkingMemoryWithEvidence()
+            self.working_memory_system = WorkingMemoryWithEvidence(working_memory_system_args)
         elif working_memory_system == "WorkingMemoryWithActivationSpreading":
-            self.working_memory_system = WorkingMemoryWithActivationSpreading()
+            self.working_memory_system = WorkingMemoryWithActivationSpreading(working_memory_system_args)
         else:
             print("Working Memory System not found")
 
@@ -68,7 +66,7 @@ class Cognitive_System():
 
             if reward == Reward.none:
                 logging.info("Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
-                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory.stored_sentences)
+                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge)
                 logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s " % 
@@ -76,20 +74,30 @@ class Cognitive_System():
                     ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 return action_chosen
             else:
-                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory.stored_sentences)
+                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge)
                 logging.info("Updated Decision Making Policy")
-                revised_knowledge = self.belief_revision_system.revise_belief_base(generated_propositions, self.long_term_memory)
+                if type(self.decision_making_system) is QLearningDecisionMakingSystem:
+                    logging.info("Q Table: \r\n %s" % (self.decision_making_system.q_table))
+                revised_knowledge = self.belief_revision_system.revise_belief_base(generated_propositions, self.long_term_memory.stored_sentences)
                 self.long_term_memory.update(revised_knowledge)
                 logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
-                # TODO What to do here? Eat or Not eat again? Does an decision need to made?
-                # action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge)
+
                 logging.info("Belief was revised, Belief Base was updated, Decision Making Policy was updated")
 
-                return None
+                # TODO What to do here? Eat or Not eat again? Does an decision need to made?
+                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
+                logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
+                action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge)
+                logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s " % 
+                (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
+                    ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
+
+                return action_chosen
         # Walk arround random, or better prefere places where you wasnt before and later use spatial knowlege to look for good plants
         else:
-            return Action.random
+            choice = random.choices(population=[Action.move_towards, Action.move_elsewhere], weights=[0.8, 0.2], k=1)
+            return choice[0]
 
 
