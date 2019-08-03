@@ -5,7 +5,6 @@ import copy
 import math
 import operator
 import random
-
 # See: Towards agents with human-like decisions under uncertainty
 class HumanLikeDecisionMakingUnderUncertaintySystem:
 
@@ -86,6 +85,10 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
 class QLearningDecisionMakingSystem:
 
     def __init__(self):
+        self.reward_table = {
+            Reward.toxic: -10,
+            Reward.nontoxic: 10
+        }
         self.learning_rate = 0.1
         self.discount_factor = 0.9
         self.q_table = {}
@@ -135,6 +138,10 @@ class QLearningDecisionMakingSystem:
         return key[:-1]
  
     def update_policy(self, reward, next_observation, next_available_sentences):
+        if not self.last_state_key:
+            key = self.create_key(next_observation, next_available_sentences)
+            self.add_state(key)
+        reward = self.reward_table.get(reward)
         next_state = self.create_key(next_observation, next_available_sentences)
         maximum_future_reward = self.get_maximum_reward_for_next_sate(next_state)
 

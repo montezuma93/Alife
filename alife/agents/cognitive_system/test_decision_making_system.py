@@ -132,7 +132,7 @@ class DecisionMakingSystemTest(TestCase):
         Sentence([([ColorGreen()], Reward.none)], 0.1)]
 
         self.decision_making_system.make_decision(observations, available_knowledge)
-        self.decision_making_system.update_policy(10, observations, available_knowledge)
+        self.decision_making_system.update_policy(Reward.nontoxic, observations, available_knowledge)
 
         self.assertEqual(1, len(self.decision_making_system.q_table))
         self.assertEqual(1, max(self.decision_making_system.q_table["O:GRD|B:G-X,G!D-X,RTG-X,DG-!X"].items(), key=lambda x: x[1])[1])
@@ -157,7 +157,7 @@ class DecisionMakingSystemTest(TestCase):
         next_observations = [Sentence([([ColorGreen(), DayProposition()], Reward.none)], 0.1),
         Sentence([([ColorGreen()], Reward.none)], 0.1)]
         
-        self.decision_making_system.update_policy(10, next_observations, available_knowledge)
+        self.decision_making_system.update_policy(Reward.nontoxic, next_observations, available_knowledge)
 
         self.assertEqual(2, len(self.decision_making_system.q_table))
         self.assertEqual(1, max(self.decision_making_system.q_table["O:GRD|B:G-X,G!D-X,RTG-X,DG-!X"].items(), key=lambda x: x[1])[1])

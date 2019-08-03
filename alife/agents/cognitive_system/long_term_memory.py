@@ -6,16 +6,22 @@ class LongTermMemory:
         self.time_since_initialization = 1
         self.stored_sentences = []
 
+    def get_time_since_initialization(self):
+        return self.time_since_initialization
+
+    def set_time_since_initialization(self, time_since_initialization):
+        self.time_since_initialization = time_since_initialization
+
     def save_sentence(self, sentence_to_store: Sentence):
         sentence_to_store.usages = [self.time_since_initialization]
         self.stored_sentences.append(sentence_to_store)
         self.time_since_initialization = self.time_since_initialization + 1
 
     def update(self, revised_knowledge_base):
-        self.time_since_initialization = self.time_since_initialization + 1
         for sentence in revised_knowledge_base:
-            if sentence in stored_sentences:
-                setence.usage.append(self.time_since_initialization)
+            if sentence in self.stored_sentences:
+                sentence.usages.append(self.time_since_initialization)
+                self.time_since_initialization = self.time_since_initialization + 1
             else:
-                sentence.usage = [self.time_since_initialization]
-                stored_sentences.append(sentence)
+                self.save_sentence(sentence)
+        

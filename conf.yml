@@ -1,10 +1,10 @@
 bugs:
   1: alife.agents.evolution/SimpleEvolver/{'H':10}
   2: alife.agents.evolution/SimpleEvolver/{'H':-10}
-  3: alife.agents.evolution/CognitiveEnvolver/{'H':10, 'ObservationSystem':'MultiplePropositionSystem',
-    'BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithEvidence',
-    'DecisionMakingSystem':'QLearningDecisionMakingSystem', 'BeliefRevisionSystem_Args':['True'],
-    'DecisionMakingSystem_Args':[0], 'ClosedWorldAssumption':'True'}
+  3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'SinglePropositionSystem',
+    'BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading',
+    'DecisionMakingSystem':'QLearningDecisionMakingSystem','ObservationSystem_Args':[],
+    'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':[], 'DecisionMakingSystem_Args':[]}
 objects:
   bite_ratio: 0.05
   bounce_damage: 1.0
@@ -16,7 +16,7 @@ objects:
   init_energy: 1.0
   terrain_damage: 1.5
   touch_threshold: 0.9
-  toxic_damage: 26.056379259433513
+  toxic_damage: 40.37267625959933
 world:
   factor: 2
   fps: 1

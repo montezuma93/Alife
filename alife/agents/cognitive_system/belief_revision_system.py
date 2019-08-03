@@ -10,29 +10,54 @@ class BeliefRevisionSystem:
 
 class FormalBeliefRevision(BeliefRevisionSystem):
 
-    def __init__(self, closed_world_assumption, belief_revision_system_args):
-        self.closed_world_assumption = closed_world_assumption
+    def __init__(self, belief_revision_system_args):
+        self.closed_world_assumption = belief_revision_system_args[0]
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption
 
-    def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
+    def revise_belief_base(self, new_sentences: list, belief_base: list):
         revised_belief_base = []
         if len(belief_base) == 0:
-            revised_belief_base.append(new_sentence)
+            revised_belief_base = new_sentences
             return revised_belief_base
-        negative_rank = self.calculate_rank(new_sentence, belief_base)
+        else:
+            for sentence_to_add in new_sentences:
+                # Check if sentence is already in belief base
+                if not self.sentence_is_in_belief_base(sentence_to_add, belief_base, revised_belief_base):
+                    negative_rank = self.calculate_rank(sentence_to_add, belief_base)
+                    for sentence in belief_base:
+                        if sentence.evidence > negative_rank:
+                            revised_belief_base.append(sentence)
+                        # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
+                        # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
+                        merged_sentence = Sentence(sentence.propositions + sentence_to_add.propositions, max(sentence.evidence + 1, sentence_to_add.evidence))
+                        revised_belief_base.append(merged_sentence)
+                    revised_belief_base.append(sentence_to_add)
+            return revised_belief_base
 
-        for sentence in belief_base:
-            if sentence.evidence > negative_rank:
-                revised_belief_base.append(sentence)
-            # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
-            # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
-            merged_sentence = Sentence(sentence.propositions + new_sentence.propositions, max(sentence.evidence + 1, new_sentence.evidence))
-            revised_belief_base.append(merged_sentence)
-        revised_belief_base.append(new_sentence)
-        return revised_belief_base
+    def sentence_is_in_belief_base(self, new_sentence, belief_base, revised_belief_base):
+        propositions_in_new_sentence = ""
+        for proposition in new_sentence.propositions[0][0]:
+            propositions_in_new_sentence = propositions_in_new_sentence + proposition.variable
+        propositions_in_new_sentence = propositions_in_new_sentence + new_sentence.propositions[0][1].value
 
+        # If sentence is in belief base, adjust its evidence
+        for stored_sentence in belief_base:
+            propositions_in_belief_base= ""
+            if len(stored_sentence.propositions) == 1:
+                for proposition in stored_sentence.propositions[0][0]:
+                    propositions_in_belief_base = propositions_in_belief_base + proposition.variable
+                propositions_in_belief_base = propositions_in_belief_base + stored_sentence.propositions[0][1].value
+                # Sentence already in belief base, now increase its evidence
+                if propositions_in_new_sentence == propositions_in_belief_base:
+                    stored_sentence.evidence = stored_sentence.evidence + new_sentence.evidence
+                    # Add all sentences to revised belief base, as sentence is already in belief base
+                    for stored_sentence in belief_base:
+                        revised_belief_base.append(stored_sentence)
+                    return True
+        else:
+            return False
 
     def calculate_rank(self, sentence: Sentence, belief_base: list):
         belief_base_truth_table = self.create_truth_table_for_belief_base(belief_base)
@@ -195,15 +220,15 @@ class FormalBeliefRevision(BeliefRevisionSystem):
   
 class ProbabilityBeliefRevision(BeliefRevisionSystem):
 
-    def __init__(self, closed_world_assumption, belief_revision_system_args):
+    def __init__(self, belief_revision_system_args):
         # ALl observed data, will be added to this dict. Key will be the Propositions. 
         # For example: Rock and Green Plant <-> Toxic, will lead to key RGT.
         # The value for that entry will be the amount of observations for that key. 
         # If probability for that Propositions was 1/4, the value will be increased by 0.25
         self.observed_data = {}
         self.pseudo_sample_size = 10
-        self.closed_world_assumption = closed_world_assumption
-        self.uses_occams_razor_principle = belief_revision_system_args[0]
+        self.closed_world_assumption = belief_revision_system_args[0]
+        self.uses_occams_razor_principle = belief_revision_system_args[1]
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption
@@ -211,20 +236,21 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
     def set_occams_razor_principle(self, uses_occams_razor_principle):
         self.uses_occams_razor_principle = uses_occams_razor_principle
 
-    def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
+    def revise_belief_base(self, new_sentences: list, belief_base: list):
         revised_belief_base = []
-        new_observed_data_key = self.add_to_observed_data(new_sentence)
-        
-        for sentence in belief_base:
-            sentence_key = self.create_sentence_key(sentence)
-            posterior = self.calculate_posterior(sentence_key)
-            sentence.evidence = posterior
-            revised_belief_base.append(sentence)
-        
-        if len(revised_belief_base) < len(self.observed_data.keys()):
-            posterior_of_new_sentence = self.calculate_posterior(new_observed_data_key)
-            new_sentence.evidence = posterior_of_new_sentence
-            revised_belief_base.append(new_sentence)
+        for sentence_to_add in new_sentences:
+            new_observed_data_key = self.add_to_observed_data(sentence_to_add)
+            
+            for sentence in belief_base:
+                sentence_key = self.create_sentence_key(sentence)
+                posterior = self.calculate_posterior(sentence_key)
+                sentence.evidence = posterior
+                revised_belief_base.append(sentence)
+            
+            if len(revised_belief_base) < len(self.observed_data.keys()):
+                posterior_of_new_sentence = self.calculate_posterior(new_observed_data_key)
+                sentence_to_add.evidence = posterior_of_new_sentence
+                revised_belief_base.append(sentence_to_add)
         return revised_belief_base
 
     def add_to_observed_data(self, new_sentence):
