@@ -118,46 +118,16 @@ class CognitiveEnvolver(Agent):
         to make any progress.
     '''
 
-    def __init__(self, obs_space, act_space, H=0, **kwargs):
-        """
-            Init.
-
-            Parameters
-            ----------
-
-            obs_space : BugSpace
-                observation space
-            act_space : BugSpace
-                action space
-            H : int
-                number of hidden units (negative for recurrent)
-
-        """
-        self.obs_space = obs_space
-        self.act_space = act_space
-
-        D = obs_space.shape[0]
-        L = act_space.shape[0]
-
-        if 'H' in kwargs:
-            H = kwargs['H']
-
-        if H > 0:
-            self.h = MLP(D,L,H)
-        elif H < 0:
-            self.h = ESN(D,L,-H)
-        else:
-            self.h = SLP(D,L)
-
+    def __init__(self, obs_space=None, act_space=None, H=0, **kwargs):
         # Uniq ID (for visualization)
         self.id_num = str(choice(1000))+':'
         self.generation = 1
 
         #Create cognitive system
-        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"),
-         kwargs.get("BeliefRevisionSystem"), kwargs.get("WorkingMemorySystem"),
-          kwargs.get("DecisionMakingSystem"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("DecisionMakingSystem_Args"), 
-           kwargs.get("ClosedWorldAssumption"))
+        self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"),
+         kwargs.get("WorkingMemorySystem"), kwargs.get("DecisionMakingSystem"),
+          kwargs.get("ObservationSystem_Args"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("WorkingMemorySystem_Args"),
+           kwargs.get("DecisionMakingSystem_Args"))
         
 
     def act(self, obs, nearby_objects, is_day_time, reward,done=False):
