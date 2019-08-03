@@ -8,7 +8,7 @@ class OberservationToPropositionSystem:
 
 class MultiplePropositionSystem(OberservationToPropositionSystem):
 
-    def __init__(self):
+    def __init__(self, observation_system_args):
         pass
     
     def observation_to_proposition(self, color_proposition: ColorProposition, observated_objects: list, reward: Reward):
@@ -29,7 +29,7 @@ class MultiplePropositionSystem(OberservationToPropositionSystem):
 
 class OccamsRazorMultiplePropositionSystem(OberservationToPropositionSystem):
     
-    def __init__(self):
+    def __init__(self, observation_system_args):
         pass
     
     def observation_to_proposition(self, color_proposition: ColorProposition, observated_objects: list, reward: Reward):
@@ -47,7 +47,7 @@ class OccamsRazorMultiplePropositionSystem(OberservationToPropositionSystem):
 
 class SinglePropositionSystem(OberservationToPropositionSystem):
     
-    def __init__(self):
+    def __init__(self, observation_system_args):
         pass
     
     def observation_to_proposition(self, color_proposition: ColorProposition, observated_objects: list, reward: Reward):
@@ -58,7 +58,7 @@ class SinglePropositionSystem(OberservationToPropositionSystem):
 
 class RandomSinglePropositionSystem(OberservationToPropositionSystem):
     
-    def __init__(self):
+    def __init__(self, observation_system_args):
         pass
     
     def observation_to_proposition(self, color_proposition: ColorProposition, observated_objects: list, reward: Reward):

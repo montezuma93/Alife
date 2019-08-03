@@ -6,7 +6,7 @@ from numpy import log, power
 
 class WorkingMemoryWithEvidence:
 
-    def __init__(self):
+    def __init__(self, working_memory_system_args):
         #Between 1 and 100
         self.percentage_amount_for_retrieving = 10
 
@@ -15,7 +15,8 @@ class WorkingMemoryWithEvidence:
             return
         self.percentage_amount_for_retrieving = percentage_amount_for_retrieving
 
-    def retrieve_knowledge(self, new_sentence: Sentence, stored_sentences: list):
+    def retrieve_knowledge(self, new_sentences: list, long_term_memory):
+        stored_sentences = long_term_memory.stored_sentences
         stored_sentences.sort(key=lambda sentence: sentence.evidence, reverse=True)
         total_amount_of_sentences = len(stored_sentences)
         amount_of_sentences_to_return = math.ceil(total_amount_of_sentences /100 * self.percentage_amount_for_retrieving)
@@ -30,18 +31,20 @@ class WorkingMemoryWithEvidence:
 
 class WorkingMemoryWithActivationSpreading:
 
-    def __init__(self):
+    def __init__(self, working_memory_system_args):
         self.initial_activation_value = 1
         self.base_activation_decay = -0.5
-        self.include_percentage_evidence_value = 0
+        self.include_percentage_evidence_value = 10
 
     def set_include_percentage_evidence_value(self, include_percentage_evidence_value):
         self.include_percentage_evidence_value = include_percentage_evidence_value
 
-    def retrieve_knowledge(self, new_sentence: Sentence, stored_sentences: list, actual_time_step: int):
+    def retrieve_knowledge(self, new_sentences: list, long_term_memory):
+        stored_sentences = long_term_memory.stored_sentences
+        actual_time_step = long_term_memory.get_time_since_initialization()
         self.init_activation_value_property(stored_sentences)
-        if new_sentence:
-            self.spread_activation(new_sentence, stored_sentences)
+        if new_sentences:
+            self.spread_activation(new_sentences, stored_sentences)
         self.add_calculated_base_activation(stored_sentences, actual_time_step)
         if self.include_percentage_evidence_value > 0:
             self.add_evidence_to_activation_value(stored_sentences)
@@ -53,9 +56,9 @@ class WorkingMemoryWithActivationSpreading:
         for sentence in stored_sentences:
             sentence.activation_value = 0
 
-    def spread_activation(self, new_sentence: Sentence, stored_sentences: list):
-        if new_sentence:
-            for proposition in new_sentence.propositions[0][0]:
+    def spread_activation(self, new_sentences: list, stored_sentences: list):
+        for sentence in new_sentences:
+            for proposition in sentence.propositions[0][0]:
                 sentence_receive_activation_fraction = []
                 for sentence in stored_sentences:
                     if any(isinstance(x, type(proposition)) for x in sentence.propositions[0][0]):
@@ -80,6 +83,8 @@ class WorkingMemoryWithActivationSpreading:
             sentence.activation_value = sentence.activation_value + base_activation_value
 
     def calculate_threshold(self, stored_sentences):
+        if len(stored_sentences) == 0:
+            return 0
         total_activation_value = 0
         for sentence in stored_sentences:
             total_activation_value = total_activation_value + sentence.activation_value
@@ -90,7 +95,7 @@ class WorkingMemoryWithActivationSpreading:
     def get_most_activated_sentences(self, stored_sentences, retrieval_threshold):
         available_sentences = []
         for sentence in stored_sentences:
-            if sentence.activation_value > retrieval_threshold:
+            if sentence.activation_value >= retrieval_threshold:
                 available_sentences.append(sentence)
         return available_sentences
 

@@ -15,7 +15,7 @@ class Sentence():
             or_sentences.append("propositions: {0}, reward: {1} ".format(proposition_ands, reward))
         
         
-        return "Sentence: {0}, evidence: {1} ".format("v".join(or_sentences), self.evidence)
+        return "Sentence: {0}, evidence: {1} ".format(" v ".join(or_sentences), self.evidence)
 
 class Proposition():
     def __init__(self):

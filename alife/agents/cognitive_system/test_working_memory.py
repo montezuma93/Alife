@@ -9,7 +9,7 @@ class WorkingMemoryTest(TestCase):
 ########################### WORKING MEMORY ###########################################
 
     def test_set_percentage(self):
-        self.working_memory = WorkingMemoryWithEvidence()
+        self.working_memory = WorkingMemoryWithEvidence([])
         self.working_memory.percentage_amount_for_retrieving = 100
 
         self.working_memory.set_percentage_amount_for_retrieving(0)
@@ -21,7 +21,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_sentences_all(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence()
+        self.working_memory = WorkingMemoryWithEvidence([])
         self.working_memory.percentage_amount_for_retrieving = 100
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -31,12 +31,12 @@ class WorkingMemoryTest(TestCase):
         sentence_5 = Sentence([([NextToRock(), ColorOrange()], Reward.nontoxic)], 1)
 
         self.long_term_memory.stored_sentences = [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5]
-        available_knowledge = self.working_memory.retrieve_knowledge(None, self.long_term_memory.stored_sentences)
+        available_knowledge = self.working_memory.retrieve_knowledge(None, self.long_term_memory)
         self.assertEqual(5, len(available_knowledge))
 
     def test_retrieve_sentences_some(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence()
+        self.working_memory = WorkingMemoryWithEvidence([])
         self.working_memory.set_percentage_amount_for_retrieving(50)
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -45,13 +45,13 @@ class WorkingMemoryTest(TestCase):
         sentence_5 = Sentence([([NextToRock(), ColorOrange()], Reward.nontoxic)], 1)
 
         self.long_term_memory.stored_sentences = [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5]
-        available_knowledge = self.working_memory.retrieve_knowledge(None, self.long_term_memory.stored_sentences)
+        available_knowledge = self.working_memory.retrieve_knowledge(None, self.long_term_memory)
         self.assertEqual(4, len(available_knowledge))
 
 
     def test_retrieve_sentences_some_including_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence()
+        self.working_memory = WorkingMemoryWithEvidence([])
         self.working_memory.set_percentage_amount_for_retrieving(10)
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -63,17 +63,14 @@ class WorkingMemoryTest(TestCase):
 
         new_sentence = Sentence([([DayProposition(), ColorOrange()], Reward.none)], 3)
 
-        available_knowledge = self.working_memory.retrieve_knowledge(new_sentence, self.long_term_memory.stored_sentences)
+        available_knowledge = self.working_memory.retrieve_knowledge(new_sentence, self.long_term_memory)
         self.assertEqual(2, len(available_knowledge))
-
-
-
  
 ########################### WORKING MEMORY WITH ACTIVATION SPREADING ###########################################
 
     def test_calculate_sentences_with_activation_spreading_with_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading()
+        self.working_memory = WorkingMemoryWithActivationSpreading([])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -85,7 +82,7 @@ class WorkingMemoryTest(TestCase):
         self.long_term_memory.stored_sentences = [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5, sentence_6]
 
         self.working_memory.init_activation_value_property(self.long_term_memory.stored_sentences)
-        self.working_memory.spread_activation(new_sentence, self.long_term_memory.stored_sentences)
+        self.working_memory.spread_activation([new_sentence], self.long_term_memory.stored_sentences)
 
         self.assertEqual(0.5, sentence_1.activation_value)
         self.assertEqual(0.75, sentence_2.activation_value)
@@ -96,7 +93,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_add_calculated_base_activation_activation_spreading(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading()
+        self.working_memory = WorkingMemoryWithActivationSpreading([])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_1.usages = [1]
@@ -116,7 +113,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading()
+        self.working_memory = WorkingMemoryWithActivationSpreading([])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_1.usages = [1]
@@ -133,7 +130,8 @@ class WorkingMemoryTest(TestCase):
         new_sentence = Sentence([([ColorBlue(), DayProposition(), NextToRock()], Reward.toxic)], 3)
         self.long_term_memory.stored_sentences = [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5, sentence_6]
 
-        available_sentences = self.working_memory.retrieve_knowledge(new_sentence, self.long_term_memory.stored_sentences, 10)
+        self.long_term_memory.set_time_since_initialization(10)
+        available_sentences = self.working_memory.retrieve_knowledge([new_sentence], self.long_term_memory)
 
         self.assertEqual(3, len(available_sentences))
         self.assertEqual(sentence_2, available_sentences[0])
@@ -143,7 +141,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_evidence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading()
+        self.working_memory = WorkingMemoryWithActivationSpreading([])
         self.working_memory.set_include_percentage_evidence_value(75)
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -161,7 +159,8 @@ class WorkingMemoryTest(TestCase):
         new_sentence = Sentence([([ColorBlue(), DayProposition(), NextToRock()], Reward.toxic)], 3)
         self.long_term_memory.stored_sentences = [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5, sentence_6]
 
-        available_sentences = self.working_memory.retrieve_knowledge(new_sentence, self.long_term_memory.stored_sentences, 10)
+        self.long_term_memory.set_time_since_initialization(10)
+        available_sentences = self.working_memory.retrieve_knowledge([new_sentence], self.long_term_memory)
 
         self.assertEqual(4, len(available_sentences))
         self.assertEqual(sentence_1, available_sentences[0])

@@ -6,7 +6,7 @@ from .propositions import *
 class ObservationToPropositionSystemTest(TestCase):
 
     def test_multiple_proposition_system(self):
-        self.observation_to_proposition_system = MultiplePropositionSystem()
+        self.observation_to_proposition_system = MultiplePropositionSystem([])
         observed_propositions = [NextToRock(), NextToTreeTrunk(), DayProposition()]
         color_proposition = ColorGreen()
 
@@ -20,7 +20,7 @@ class ObservationToPropositionSystemTest(TestCase):
             self.assertEqual(0.125, sentence.evidence)
     
     def test_occams_razor_multiple_proposition_system(self):
-        self.observation_to_proposition_system = OccamsRazorMultiplePropositionSystem() 
+        self.observation_to_proposition_system = OccamsRazorMultiplePropositionSystem([]) 
         observed_propositions = [NextToRock(), NextToTreeTrunk(), DayProposition()]
         color_proposition = ColorGreen()
         expected_evidence = {1:0.2,2:0.15,3:0.1,4:0.05}
@@ -35,7 +35,7 @@ class ObservationToPropositionSystemTest(TestCase):
         
 
     def test_single_proposition_system(self):     
-        self.observation_to_proposition_system = SinglePropositionSystem() 
+        self.observation_to_proposition_system = SinglePropositionSystem([]) 
         next_to_rock_proposition = NextToRock()
         next_to_tree_trunk_proposition = NextToTreeTrunk()
         day_proposition = DayProposition()
@@ -55,7 +55,7 @@ class ObservationToPropositionSystemTest(TestCase):
         self.assertEqual(1, sentence.evidence)
 
     def test_random_single_proposition_system(self): 
-        self.observation_to_proposition_system = RandomSinglePropositionSystem()     
+        self.observation_to_proposition_system = RandomSinglePropositionSystem([])     
         observed_propositions = [NextToRock(), NextToTreeTrunk(), DayProposition()]
         color_proposition = ColorGreen()
 
