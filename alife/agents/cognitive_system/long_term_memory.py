@@ -18,10 +18,15 @@ class LongTermMemory:
         self.time_since_initialization = self.time_since_initialization + 1
 
     def update(self, revised_knowledge_base):
+        updated_stored_sentences = []
         for sentence in revised_knowledge_base:
             if sentence in self.stored_sentences:
                 sentence.usages.append(self.time_since_initialization)
                 self.time_since_initialization = self.time_since_initialization + 1
+                updated_stored_sentences.append(sentence)
             else:
-                self.save_sentence(sentence)
+                sentence.usages = [self.time_since_initialization]
+                updated_stored_sentences.append(sentence)
+                self.time_since_initialization = self.time_since_initialization + 1
+        self.stored_sentences = updated_stored_sentences
         

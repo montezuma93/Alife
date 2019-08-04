@@ -82,8 +82,10 @@ class FormalBeliefRevision(BeliefRevisionSystem):
                 while i < len(sentence[0]):
                     conjuction_part = "(" + conjuction_part  + "&" + sentence[0][i].variable + ")"
                     i += 1
-
-                or_parts.append("((!(" + conjuction_part + ")" + "^" + sentence[1].value + "))")
+                if sentence[1].value == "!X":
+                    or_parts.append("(((" + conjuction_part + ")" + "^" + "X" + "))")
+                else:   
+                    or_parts.append("((!(" + conjuction_part + ")" + "^" + "X" + "))")
 
             # Adding up all or parts
             complete_sentence_or_sentence = or_parts[0]
@@ -98,7 +100,6 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         while i < len(sentences):
             complete_sentence = "(" + complete_sentence  + "&" + sentences[i] + ")"
             i += 1
-
         return TruthTable(complete_sentence)
         
     def create_truth_table_for_new_sentence(self, sentence):

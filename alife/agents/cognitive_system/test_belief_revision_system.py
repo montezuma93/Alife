@@ -5,10 +5,51 @@ from .propositions import *
 from .belief_revision_system import *
 
 
-class BeliefRevisionTest(TestCase):
+class BeliefRevisionTest():
     
     ############################## FORMAL BELIEF REVISION ##############################################
+       
     
+    def test_create_truth_table_for_belief_base_for_or_sentence_without_negator(self):
+        self.belief_revision_system = FormalBeliefRevision([False])
+        belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic), ([DayProposition(), NextToRock(), ColorOrange()], Reward.nontoxic)], 1),
+         Sentence([([DayProposition(), NextToRock(), ColorOrange()], Reward.nontoxic)], 1)]
+
+        created_truth_table = self.belief_revision_system.create_truth_table_for_belief_base(belief_base)
+
+        self.assertEqual(TruthTable("((((!(((R&D)&G))^X))&(((!(((R&D)&G))^X))|(((((D&R)&O))^X))))&(((((D&R)&O))^X)))"), created_truth_table)
+    
+    def test_create_truth_table_for_belief_base_for_or_sentence_with_negator(self):
+        self.belief_revision_system = FormalBeliefRevision([False])
+        belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic), ([NextToRock(), ColorOrange(), NightProposition()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), ColorOrange(), NightProposition()], Reward.toxic)], 1)]
+
+        created_truth_table = self.belief_revision_system.create_truth_table_for_belief_base(belief_base)
+
+        self.assertEqual(TruthTable("((((!(((R&D)&G))^X))&(((!(((R&D)&G))^X))|((!(((R&O)&!D))^X))))&((!(((R&O)&!D))^X)))"), created_truth_table)
+    
+    def test_create_truth_table_for_belief_base_for_or_sentence_with_negator_and_non_toxic(self):
+        self.belief_revision_system = FormalBeliefRevision([False])
+        belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic), ([NextToRock(), ColorOrange(), NightProposition()], Reward.nontoxic)], 1),
+         Sentence([([NextToRock(), ColorOrange(), NightProposition()], Reward.nontoxic)], 1)]
+
+        created_truth_table = self.belief_revision_system.create_truth_table_for_belief_base(belief_base)
+
+        self.assertEqual(TruthTable("((((!(((R&D)&G))^X))&(((!(((R&D)&G))^X))|(((((R&O)&!D))^X))))&(((((R&O)&!D))^X)))"), created_truth_table)
+    
+    def test_calculate_rank_formal_belief_revision_without_closed_world_assumption_large_belief_base(self):
+        self.belief_revision_system = FormalBeliefRevision([False])
+        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 2),
+         Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic), ([NextToRock(), ColorOrange(), NightProposition()], Reward.nontoxic)], 3),
+         Sentence([([NextToRock(), ColorOrange(), NightProposition()], Reward.nontoxic)], 1)]
+
+        sentence = Sentence([([NightProposition(), ColorGreen(), NextToRock], Reward.nontoxic)], 1)
+
+        self.assertEqual(3, self.belief_revision_system.calculate_rank(sentence, old_belief_base))
+
     def test_calculate_rank_formal_belief_revision_without_closed_world_assumption(self):
         self.belief_revision_system = FormalBeliefRevision([False])
 
@@ -17,7 +58,7 @@ class BeliefRevisionTest(TestCase):
          Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
 
         self.assertEqual(0, self.belief_revision_system.calculate_rank(sentence, old_belief_base))
-   
+
 
     def test_calculate_rank_formal_belief_revision_without_closed_world_assumption_and_new_sentence_has_variable_which_is_not_in_belief_base(self):
         self.belief_revision_system = FormalBeliefRevision([False])
@@ -292,8 +333,9 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.346, another_revised_belief_base[3].evidence, 2)
 
  ############################### CONDITIONAL BELIEF REVISION ##############################################
-    
+
     '''
+    
     def test_conditional_belief_revision_create_conditionals(self):
         self.belief_revision_system = ConditionalBeliefRevision()
 
