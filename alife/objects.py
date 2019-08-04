@@ -146,7 +146,9 @@ class Thing(pygame.sprite.DirtySprite):
             creature.energy = creature.energy - creature.speed * BOUNCE_DAMAGE         # Ouch!
 
         # Bump !
+        # Does it need to be moved?
         self.pos = self.pos + (creature.unitv * creature.speed)
+
         slide_apart(creature,self)
         self.is_colliding = True
 
@@ -241,6 +243,7 @@ class Creature(Thing):
             self.energy = self.energy - being.speed * BOUNCE_DAMAGE   # Ouch!
             being.energy = being.energy - being.speed * BOUNCE_DAMAGE  # Ouch!
             slide_apart(self,being)
+            self.brain.communicate(being)
 
         else:
             # Fight!

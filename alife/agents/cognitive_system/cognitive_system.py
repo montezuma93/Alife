@@ -1,4 +1,5 @@
 from .long_term_memory import LongTermMemory
+from .communication_system import CommunicationSystem
 from .working_memory import *
 from .decision_making_system import *
 from .observation_to_proposition_system import *
@@ -10,6 +11,10 @@ class Cognitive_System():
 
     def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str,
          observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args):
+
+
+        self.factor_for_communication_sentenes = 0.5
+
         logging.basicConfig(filename="log.txt",
                                     filemode='a',
                                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -52,6 +57,7 @@ class Cognitive_System():
             print("Decision Making System not found")
 
         self.long_term_memory = LongTermMemory()
+        self.communication_system = CommunicationSystem()
 
         logging.info("Cognitive System initialized")
 
@@ -100,4 +106,13 @@ class Cognitive_System():
             choice = random.choices(population=[Action.move_towards, Action.move_elsewhere], weights=[0.8, 0.2], k=1)
             return choice[0]
 
-
+    def communicate(self, agent, other_agent):
+        logging.info("Received communication request for agent %s from agent %s" % (agent.id_num, other_agent.id_num))
+        # Knowledge of the other agent
+        other_agents_available_knowledge = other_agent.cognitive_system.working_memory_system.retrieve_knowledge(None, other_agent.cognitive_system.long_term_memory)
+        logging.info("Available Knowledge of the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])))
+        new_information = self.communication_system.communicate(other_agents_available_knowledge)
+        logging.info("Information, used from the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in new_information])))
+        revised_knowledge = self.belief_revision_system.revise_belief_base(new_information, self.long_term_memory.stored_sentences)
+        self.long_term_memory.update(revised_knowledge)
+        logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))

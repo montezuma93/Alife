@@ -156,6 +156,9 @@ class CognitiveEnvolver(Agent):
         action = self.cognitive_system.act(self, propositions[0], propositions[1], actual_reward)
         return action
 
+    def communicate(self, other_agent):
+        self.cognitive_system.communicate(self, other_agent.brain)
+
     def _cast_to_reward(self, reward):
         if reward > 0:
             return Reward.nontoxic
@@ -206,7 +209,7 @@ class CognitiveEnvolver(Agent):
 
     def __str__(self):
         ''' Return a string representation (e.g., a label) for this agent '''
-        return ("%s\nID:%s\nGen.%d" % (str(self.h.__class__.__name__), self.id_num,self.generation))
+        return ("ID:%s\nGen.%d" % (self.id_num,self.generation))
 
 #    def load(self, file_name):
 #        self.generation = 0 # TODO extract from filename

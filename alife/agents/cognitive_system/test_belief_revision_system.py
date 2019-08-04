@@ -5,7 +5,7 @@ from .propositions import *
 from .belief_revision_system import *
 
 
-class BeliefRevisionTest():
+class BeliefRevisionTest(TestCase):
     
     ############################## FORMAL BELIEF REVISION ##############################################
        

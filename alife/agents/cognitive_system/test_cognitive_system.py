@@ -45,6 +45,15 @@ class CognitiveSystemTest(TestCase):
 
         # Belief Base should be adjusted once again
         self.assertEqual(3, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
-        for sentence in self.agent.cognitive_system.long_term_memory.stored_sentences:
-            print(sentence)
-    
+
+    def test_communcation(self):
+        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':[], 'DecisionMakingSystem_Args':[]}")
+        self.agent = CognitiveEnvolver(None, None, 0, **kwargs)
+        self.other_agent = CognitiveEnvolver(None, None, 0, **kwargs)
+
+        other_agents_belief_base = [Sentence([([NextToRock(), NextToTreeTrunk(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
+         Sentence([([NextToRock(), NextToTreeTrunk(), NightProposition(), ColorGreen()], Reward.nontoxic)], 2)]
+        self.other_agent.cognitive_system.long_term_memory.update(other_agents_belief_base)
+
+        self.agent.cognitive_system.communicate(self.agent, self.other_agent)
+        self.assertEqual(1, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
