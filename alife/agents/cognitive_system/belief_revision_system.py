@@ -2,6 +2,7 @@ import itertools
 from .truths.truthtable import *
 from.propositions import *
 import sys
+import random
 
 class BeliefRevisionSystem:
 
@@ -17,24 +18,35 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         self.closed_world_assumption = has_closed_world_assumption
 
     def revise_belief_base(self, new_sentences: list, belief_base: list):
+        sentence_to_add = self.choose_sentence(new_sentences)
         revised_belief_base = []
         if len(belief_base) == 0:
-            revised_belief_base = new_sentences
+            revised_belief_base.append(sentence_to_add)
             return revised_belief_base
         else:
-            for sentence_to_add in new_sentences:
-                # Check if sentence is already in belief base
-                if not self.sentence_is_in_belief_base(sentence_to_add, belief_base, revised_belief_base):
-                    negative_rank = self.calculate_rank(sentence_to_add, belief_base)
-                    for sentence in belief_base:
-                        if sentence.evidence > negative_rank:
-                            revised_belief_base.append(sentence)
-                        # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
-                        # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
-                        merged_sentence = Sentence(sentence.propositions + sentence_to_add.propositions, max(sentence.evidence + 1, sentence_to_add.evidence))
-                        revised_belief_base.append(merged_sentence)
-                    revised_belief_base.append(sentence_to_add)
+            # Check if sentence is already in belief base
+            if not self.sentence_is_in_belief_base(sentence_to_add, belief_base, revised_belief_base):
+                negative_rank = self.calculate_rank(sentence_to_add, belief_base)
+                for sentence in belief_base:
+                    if sentence.evidence > negative_rank:
+                        revised_belief_base.append(sentence)
+                    # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
+                    # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
+                    merged_sentence = Sentence(sentence.propositions + sentence_to_add.propositions, max(sentence.evidence + 1, sentence_to_add.evidence))
+                    revised_belief_base.append(merged_sentence)
+                revised_belief_base.append(sentence_to_add)
             return revised_belief_base
+
+    # Choose sentence based on probability, or evidence
+    def choose_sentence(self, new_sentences: list):
+        total_weight = 0
+        for sentence in new_sentences:
+            total_weight = total_weight + sentence.evidence
+        probability_list = []
+        for sentence in new_sentences:
+            probability_list.append(sentence.evidence / total_weight)
+        choice = random.choices(population=new_sentences, weights=probability_list, k=1)
+        return choice[0]
 
     def sentence_is_in_belief_base(self, new_sentence, belief_base, revised_belief_base):
         propositions_in_new_sentence = ""

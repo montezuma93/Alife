@@ -8,7 +8,14 @@ from .belief_revision_system import *
 class BeliefRevisionTest(TestCase):
     
     ############################## FORMAL BELIEF REVISION ##############################################
-       
+
+    def test_multiple_propositions_observation_works_without_error(self):
+        self.belief_revision_system = FormalBeliefRevision([False])
+        belief_base = [Sentence([([NextToTreeTrunk, ColorGreen()], Reward.nontoxic)], 1)]
+        observation = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 0.1),
+         Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 2),
+         Sentence([([DayProposition(), NextToRock(), ColorOrange()], Reward.nontoxic)], 1)]
+        self.belief_revision_system.revise_belief_base(observation, belief_base)
     
     def test_create_truth_table_for_belief_base_for_or_sentence_without_negator(self):
         self.belief_revision_system = FormalBeliefRevision([False])
