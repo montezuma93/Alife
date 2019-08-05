@@ -86,12 +86,12 @@ class Cognitive_System():
                 logging.info("Updated Decision Making Policy")
                 if type(self.decision_making_system) is QLearningDecisionMakingSystem:
                     logging.info("Q Table: \r\n %s" % (self.decision_making_system.q_table))
-                revised_knowledge = self.belief_revision_system.revise_belief_base(generated_propositions, self.long_term_memory.stored_sentences)
+                filtered_sentences = self.communication_system.filter_sentences(generated_propositions)
+                logging.info("Filtered Sentences: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in filtered_sentences])))
+                revised_knowledge = self.belief_revision_system.revise_belief_base(filtered_sentences, self.long_term_memory.stored_sentences)
                 self.long_term_memory.update(revised_knowledge)
                 logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
-
                 logging.info("Belief was revised, Belief Base was updated, Decision Making Policy was updated")
-
                 # TODO What to do here? Eat or Not eat again? Does an decision need to made?
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
@@ -111,7 +111,7 @@ class Cognitive_System():
         # Knowledge of the other agent
         other_agents_available_knowledge = other_agent.cognitive_system.working_memory_system.retrieve_knowledge(None, other_agent.cognitive_system.long_term_memory)
         logging.info("Available Knowledge of the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])))
-        new_information = self.communication_system.communicate(other_agents_available_knowledge)
+        new_information = self.communication_system.filter_sentences(other_agents_available_knowledge)
         logging.info("Information, used from the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in new_information])))
         revised_knowledge = self.belief_revision_system.revise_belief_base(new_information, self.long_term_memory.stored_sentences)
         self.long_term_memory.update(revised_knowledge)

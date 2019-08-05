@@ -9,7 +9,7 @@ class CommunicationSystem:
         self.percentage_of_sentences_to_be_used = 50
 
 
-    def communicate(self, other_agents_available_knowledge):
+    def filter_sentences(self, other_agents_available_knowledge):
         other_agents_available_knowledge.sort(key=lambda sentence: sentence.evidence, reverse=True)
 
         # Just take first n sentences

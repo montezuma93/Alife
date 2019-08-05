@@ -12,4 +12,4 @@ class CommunicationSystemTest(TestCase):
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 2)
         sentence_3 = Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 3)
-        self.assertEqual(2, len(self.communication_system.communicate([sentence_1, sentence_2, sentence_3])))
+        self.assertEqual(2, len(self.communication_system.filter_sentences([sentence_1, sentence_2, sentence_3])))
