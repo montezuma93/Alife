@@ -18,24 +18,22 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         self.closed_world_assumption = has_closed_world_assumption
 
     def revise_belief_base(self, new_sentences: list, belief_base: list):
-        filtered_sentences = self.filter_sentences(new_sentences)
+        sentence_to_add = self.filter_sentences(new_sentences)
         revised_belief_base = []
         if len(belief_base) == 0:
-            revised_belief_base = filtered_sentences
+            revised_belief_base.append(sentence_to_add)
             return revised_belief_base
         else:
-            for sentence_to_add in filtered_sentences:
-                # Check if sentence is already in belief base
-                if not self.sentence_is_in_belief_base(sentence_to_add, belief_base, revised_belief_base):
-                    negative_rank = self.calculate_rank(sentence_to_add, belief_base)
-                    for sentence in belief_base:
-                        if sentence.evidence > negative_rank:
-                            revised_belief_base.append(sentence)
-                        # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
-                        # TODO: Does it make sense to "OR" Sentences for two sentences with !X and X?
-                        merged_sentence = Sentence(sentence.propositions + sentence_to_add.propositions, max(sentence.evidence + 1, sentence_to_add.evidence))
-                        revised_belief_base.append(merged_sentence)
-                    revised_belief_base.append(sentence_to_add)
+            # Check if same sentence is already in belief base -> Question What if Already in Belief Base?
+            if not self.sentence_is_in_belief_base(sentence_to_add, belief_base, revised_belief_base):
+                negative_rank = self.calculate_rank(sentence_to_add, belief_base)
+                for sentence in belief_base:
+                    if sentence.evidence > negative_rank:
+                        revised_belief_base.append(sentence)
+                    # Merge sentence from belief_base with new sentence with "OR" and calculate new evidence
+                    merged_sentence = Sentence(sentence.propositions + sentence_to_add.propositions, max(sentence.evidence + 1, sentence_to_add.evidence))
+                    revised_belief_base.append(merged_sentence)
+                revised_belief_base.append(sentence_to_add)
             return revised_belief_base
 
     # Choose sentence based on probability, or evidence
@@ -47,14 +45,14 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         for sentence in new_sentences:
             probability_list.append(sentence.evidence / total_weight)
         choice = random.choices(population=new_sentences, weights=probability_list, k=1)
-        return [choice[0]]
+        return choice[0]
 
+    # Check if sentence is already in belief base -> adjust evidence, return true and therefore the revision is done
     def sentence_is_in_belief_base(self, new_sentence, belief_base, revised_belief_base):
         propositions_in_new_sentence = ""
         for proposition in new_sentence.propositions[0][0]:
             propositions_in_new_sentence = propositions_in_new_sentence + proposition.variable
         propositions_in_new_sentence = propositions_in_new_sentence + new_sentence.propositions[0][1].value
-
         # If sentence is in belief base, adjust its evidence
         for stored_sentence in belief_base:
             propositions_in_belief_base= ""
@@ -82,24 +80,32 @@ class FormalBeliefRevision(BeliefRevisionSystem):
             return 0
 
     def create_truth_table_for_belief_base(self, belief_base: list):
-        #All sentences, will be combined later with "AND"
+        # All sentences, will be combined later with "AND"
         sentences = []
-        # all sentences in a belief base
-        for dnf_sentence in belief_base:
+        # All sentences in a belief base
+        for and_sentence in belief_base:
             # "OR" propositions, no logic yet for that part
             or_parts = []
-            for sentence in dnf_sentence.propositions:
+            for sentence in and_sentence.propositions:
+                # All variables found in the conjuction parts of the sentence, is need to be able to add non available variables, if closed world assumption is active
+                available_variables = []
+                for proposition in sentence[0]:
+                    available_variables.append(proposition.variable)
+                # If closed world assumption is set to true, for not available fact, it will be assumed that the negation holds
+                # i.e if D is not in the setence, !D is assumed
+                # Otherwise (D v !D) is assumed, but (D v !D) is always true and can be ignored
+                if self.closed_world_assumption:
+                    all_proposition_variable_names = get_variable_names_for_propositions()
+                    for proposition in all_proposition_variable_names:
+                        if not available_variables.__contains__(proposition) and not available_variables.__contains__("!" + proposition):
+                            available_variables.append("!"+proposition )
                 # Combine variables by conjunction
-                conjuction_part = sentence[0][0].variable
+                conjuction_part =available_variables[0].replace("!", "") if "!" in available_variables[0] else "!"+ available_variables[0]
                 i = 1
-                while i < len(sentence[0]):
-                    conjuction_part = "(" + conjuction_part  + "&" + sentence[0][i].variable + ")"
+                while i < len(available_variables):
+                    conjuction_part = "(" + conjuction_part  + "|" + available_variables[i].replace("!", "") + ")" if "!" in available_variables[i] else "(" + conjuction_part  + "|" + "!"+ available_variables[i] + ")"
                     i += 1
-                if sentence[1].value == "!X":
-                    or_parts.append("(((" + conjuction_part + ")" + "^" + "X" + "))")
-                else:   
-                    or_parts.append("((!(" + conjuction_part + ")" + "^" + "X" + "))")
-
+                or_parts.append("((" + conjuction_part + ")" + "|" + sentence[1].value + ")")
             # Adding up all or parts
             complete_sentence_or_sentence = or_parts[0]
             i = 1
@@ -120,8 +126,9 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         available_variables = []
         for proposition in sentence.propositions[0][0]:
             available_variables.append(proposition.variable)
-
-        # If closed world assumption is true, all variables will be negated. It will be assumed that they are negative, because they are not available
+        # If closed world assumption is set to true, for not available fact, it will be assumed that the negation holds
+        # i.e if D is not in the setence, !D is assumed
+        # Otherwise (D v !D) is assumed, but (D v !D) is always true and can be ignored
         if self.closed_world_assumption:
             all_proposition_variable_names = get_variable_names_for_propositions()
             for proposition in all_proposition_variable_names:
@@ -134,14 +141,16 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         while i < len(available_variables):
             conjuction_part = "(" + conjuction_part  + "&" + available_variables[i] + ")"
             i += 1
-        
-        # Compared to the create_truth_table_for_belief_base method, the missing ! (negation) comes from ! ! "XOR", is the same as "XOR"
-        complete_sentence = "((" + conjuction_part + ")" + "^" + sentence.propositions[0][1].value + ")"
+        # Compared to the create_truth_table_for_belief_base method, here the negation is created -> not phi
+        complete_sentence = ""
+        if sentence.propositions[0][1].value == "!X":
+            complete_sentence = "((" + conjuction_part + ")" + "&" + "(X))"
+        else:
+            complete_sentence = "((" + conjuction_part + ")" + "&" + "(!X))"
 
         return TruthTable(complete_sentence)
 
-
-
+    # Does the Belief Base entails  the New Sentence?
     def belief_base_infers_sentence(self, belief_base_truth_table, sentence_truth_table):
         # Get all indicies for which generated truth table of the belief base is true
         indices_for_truth_evaluation = [bin(i)[2:] for i, x in enumerate(belief_base_truth_table.outputs) if x == 1]
@@ -153,9 +162,7 @@ class FormalBeliefRevision(BeliefRevisionSystem):
             else:
                 # New sentence has a variable which is not in belief base yet, we dont need to care about that value and add both 0 and 1
                 variable_ordering.append("*")
-
         # Calculate output of sentence truth table to check if B -> phi
-        does_infer_new_sentence = False
         for row_for_truth_evaluation in indices_for_truth_evaluation:
             # Add leading zeros
             row_for_truth_evaluation = row_for_truth_evaluation.zfill(len(belief_base_truth_table.variables))
@@ -165,71 +172,30 @@ class FormalBeliefRevision(BeliefRevisionSystem):
                     output_str = output_str + '*'
                 else:
                     output_str = output_str + str(row_for_truth_evaluation[variable_index])
-
-            # Check if sentence truth table evaluates the values to true, If * use 0 and 1 once
-            if sentence_truth_table.get_output(output_str.replace('*', '0')) == 1:
-                does_infer_new_sentence = True
-            if sentence_truth_table.get_output(output_str.replace('*', '1')) == 1:
-                does_infer_new_sentence = True
-
-        return does_infer_new_sentence
+            # Check if sentence truth table evaluates the values to true, If * use 0 and 1 once -> need to be true for all
+            # B entails phi means -> for ß -> phi, and this is true if for value ß = 1 also phi needs to be 1
+            if sentence_truth_table.get_output(output_str.replace('*', '0')) == 0 or sentence_truth_table.get_output(output_str.replace('*', '1')) == 0:
+                # For any vlaue where ß is true, phi is false, so B does not entail phi
+                return False
+        return True
 
     def calculate_b_m_rank(self, sentence_truth_table, belief_base):
-        belief_base_sentences = sorted(belief_base, key=lambda x: x.evidence, reverse=False)
+        belief_base_sentences = sorted(belief_base, key=lambda x: x.evidence, reverse=True)
 
-        counter = 0
-        while True:
-            evidence = belief_base_sentences[counter].evidence
+        next_index_to_check = len(belief_base_sentences)-1
+        while next_index_to_check >= 0:
+            evidence = belief_base_sentences[next_index_to_check].evidence
             belief_base_sentences_with_at_least_evidence = []
-            for sentence in belief_base_sentences:
+            for index, sentence in reversed(list(enumerate(belief_base_sentences))):
                 if sentence.evidence >= evidence:
                     belief_base_sentences_with_at_least_evidence.append(sentence)
+                    next_index_to_check = index - 1
 
-            # Get variables combinations, which are used to check if they infer the new sentence
-            variables_combinations_to_check = []
-            for sentence in belief_base_sentences_with_at_least_evidence:
-                for propositions in sentence.propositions:
-                    variable_combination_to_check = []
-                    for proposition in propositions[0]:
-                        variable_combination_to_check.append(proposition.variable)
-                    variable_combination_to_check.append(propositions[1].value)
-                    variables_combinations_to_check.append(variable_combination_to_check)
-            
-            if self.variables_combinations_infers_sentence(variables_combinations_to_check, sentence_truth_table):
-                if counter == len(belief_base_sentences) - 1:
-                    # If maximum subset m of B reached, return evidence
-                    return belief_base_sentences[counter].evidence
-                # Else check next smaller subset m of B
-                counter = counter + 1
-            else:
-                # If does subset m of B does not infer new sentence return evidence
-                return belief_base_sentences[counter - 1].evidence
-    
-    def variables_combinations_infers_sentence(self, variables_combinations_to_check, sentence_truth_table):
-        for variable_combination in variables_combinations_to_check:
-            output_str = ""
-            for variable in sentence_truth_table.variables:
-                if variable in variable_combination:
-                    variable_index = variable_combination.index(variable)
-                elif "!" + variable in variable_combination:
-                    variable_index = variable_combination.index("!" + variable)
-                else:
-                    variable_index = "*"
-                if variable_index == "*":
-                    # New sentence has a variable which is not in belief base yet, we dont need to care about that value and add both 0 and 1
-                    output_str = output_str + "*"
-                else:   
-                    if "!" in variable_combination[variable_index]:
-                        output_str = output_str + "0"
-                    else:
-                        output_str = output_str + "1"
-
-            if sentence_truth_table.get_output(output_str.replace("*", "0")) == 1:
-                return True
-            if sentence_truth_table.get_output(output_str.replace("*", "1")) == 1:
-                return True
-        return False
-
+            # Check B entails varphi
+            belief_base_truth_table_with_at_least_evidence = self.create_truth_table_for_belief_base(belief_base_sentences_with_at_least_evidence)
+            if self.belief_base_infers_sentence(belief_base_truth_table_with_at_least_evidence, sentence_truth_table):
+                return belief_base_sentences[last_index_which_entails_new_sentence].evidence
+        return belief_base_sentences[0].evidence
 
   
 class ProbabilityBeliefRevision(BeliefRevisionSystem):
