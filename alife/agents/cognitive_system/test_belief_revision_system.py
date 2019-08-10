@@ -514,3 +514,4 @@ class BeliefRevisionTest(TestCase):
         new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
 
         self.belief_revision_system.revise_belief_base(new_sentences)
+    

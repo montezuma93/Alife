@@ -311,7 +311,8 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             y_values = self.solve_gamma_values(kappa_values[0][1], kappa_values[1][1])
             kappa_zero = self.calculate_kappa_zero(y_values[1], kappa_values[0][1], kappa_values[2][1])
             self.update_kappa_values(kappa_zero, y_values[0], y_values[1], kappa_values[0][0], kappa_values[1][0], kappa_values[2][0], color)
-            #self.revise_belief_base()
+        sentences = self.map_possible_worlds_to_belief_base()
+        return sentences
 
 
     def calculate_kappa_values(self, new_sentence):
@@ -391,6 +392,7 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                     is_not_applicable = False
             if is_not_applicable:
                 not_applicable_worlds.append((world, value))
+        # Ad all not applicable worlds for other colors
 
         kappa_values = []
         min_value = None
@@ -406,9 +408,16 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 min_value = world[1]
         kappa_values.append((falsifying_worlds, min_value if min_value is not None else 0))
 
+        min_value = None
         for world in not_applicable_worlds:
             if min_value is None or world[1] < min_value:
                 min_value = world[1]
+        # Worlds with other colors are not applicable
+        for color_world, possible_world in self.possible_worlds.items():
+            if color_world != color:
+                for propositions, ranking in possible_world.items():
+                    if min_value is None or ranking < min_value:
+                        min_value = ranking
         kappa_values.append((not_applicable_worlds, min_value if min_value is not None else 0))    
 
         return (kappa_values, color)
@@ -437,9 +446,48 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             self.possible_worlds[color][falsifying_world[0]] = self.possible_worlds[color][falsifying_world[0]] - kappa_zero + y_minus
         for not_applicable_world in not_applicable_worlds:
             self.possible_worlds[color][not_applicable_world[0]] = self.possible_worlds[color][not_applicable_world[0]] - kappa_zero
+        #Because all other colors are not applicable
+        for color_world, possible_world in self.possible_worlds.items():
+            if color_world != color:
+                for propositions, ranking in possible_world.items():
+                    self.possible_worlds[color_world][propositions] = self.possible_worlds[color_world][propositions] - kappa_zero
         print(self.possible_worlds)
 
 
+    def map_possible_worlds_to_belief_base(self):
+        key_to_proposition_mapping = {
+            "D": DayProposition(),
+            "!D": NightProposition(),
+            "R": NextToRock(),
+            "T": NextToTreeTrunk(),
+            "O": ColorOrange(),
+            "G": ColorGreen(),
+            "P": ColorPurple(),
+            "B": ColorBlue()
+        }
+        variables = get_variable_names_for_propositions()
+        reward_variables = get_variable_names_for_reward_propositions()
+        max_amount_of_propositions = len(variables)
+        sentences = []
+        for color, possible_world in self.possible_worlds.items():
+            for propositions, ranking in possible_world.items():
+                sentence_propositions = [key_to_proposition_mapping.get(color)]
+                for index, proposition in enumerate(propositions):
+                    if index < max_amount_of_propositions:
+                        if variables[index] == "D":
+                            if proposition == "0":
+                                sentence_propositions.append(key_to_proposition_mapping.get("!D"))
+                            else:
+                                sentence_propositions.append(key_to_proposition_mapping.get("D"))
+                        else:
+                            if proposition == "1":
+                                sentence_propositions.append(key_to_proposition_mapping.get(variables[index]))
+                if propositions[max_amount_of_propositions] == "0":
+                    sentences.append(Sentence([(sentence_propositions, Reward.nontoxic)], ranking))
+                else:
+                    sentences.append(Sentence([(sentence_propositions, Reward.toxic)], ranking))
+        return sentences
+            
 
 # Belief Revision with Explanations
 # See: Explanations, belief revision and defeasible reasoning
