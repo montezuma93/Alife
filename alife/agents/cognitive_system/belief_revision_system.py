@@ -3,6 +3,7 @@ from .truths.truthtable import *
 from.propositions import *
 import sys
 import random
+from sympy import *
 
 class BeliefRevisionSystem:
 
@@ -285,115 +286,160 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
 # See Towards a General framework of Kinds of Forgetting in Common-Sense Belief Management
 class ConditionalBeliefRevision(BeliefRevisionSystem):
     
-    def __init__(self, closed_world_assumption, belief_revision_system_args):
-        self.closed_world_assumption = closed_world_assumption
+    def __init__(self, belief_revision_system_args):
+        self.closed_world_assumption = belief_revision_system_args[0]
+        self.possible_worlds = self.create_possible_worlds()
 
-    def revise_belief_base(self, new_sentence: Sentence, belief_base: list):
-        self.calculate_kappa_values(belief_base)
-
-    def calculate_kappa_values(self, belief_base):       
-        self.variables = get_variable_names_for_all_propositions()
-        self.create_possible_worlds()
-        # indicies = length of belief_base or length of conditionals and is given
-        conditionals = self.create_conditionals(belief_base)
-        kappa_vector = [None] * len(conditionals)
-        # Ki entries: [([for each verified world: [k_j which falsify i],[],..], for each falsified world: [k_j which falsify i],[],..] ), ()]
-        constraints = self.create_constraints(conditionals, kappa_vector)
-
-    def create_constraints(self, conditionals, kappa_vector):
-        constraints = []
-        for index, conditional in enumerate(conditionals):
-            k_i_constraint = self.calculating_k_i_constraint(index, conditional, conditionals, kappa_vector)
-            constraints.append(k_i_constraint)
-        return constraints
-    
     def create_possible_worlds(self):
-        possible_worlds = []
-        all_possible_worlds = [list(i) for i in itertools.product([0, 1], repeat=len(self.variables))]
-        # Remove all worlds, which aren't possible because of a plant can't be orange and blue at the same time but at least one color need to be set
-        for possible_world in all_possible_worlds:
-            amount_of_ones_in_color_propositions = possible_world[0] + possible_world[1] + possible_world[2] + possible_world[3]
-            if amount_of_ones_in_color_propositions == 1:
-                possible_worlds.append(possible_world)
-        self.possible_worlds = possible_worlds
+        self.variables = get_variable_names_for_propositions()
+        self.reward_variables = get_variable_names_for_reward_propositions()
+        possible_worlds = {}
+        for color in get_variable_names_for_color_propositions():
+            possible_worlds[color] = {}
+            all_combinations = [list(i) for i in itertools.product([0, 1], repeat=len(self.variables + self.reward_variables))]
+            for combination in all_combinations:
+                combination_str = [str(i) for i in combination]
+                combination_key = "".join(combination_str)
+                possible_worlds[color][combination_key] = 0
+        return possible_worlds
+    
+    def revise_belief_base(self, new_sentences: Sentence):
+        for sentence in new_sentences:
+            kappa_values_and_color = self.calculate_kappa_values(sentence)
+            kappa_values = kappa_values_and_color[0]
+            color = kappa_values_and_color[1]
+            y_values = self.solve_gamma_values(kappa_values[0][1], kappa_values[1][1])
+            kappa_zero = self.calculate_kappa_zero(y_values[1], kappa_values[0][1], kappa_values[2][1])
+            self.update_kappa_values(kappa_zero, y_values[0], y_values[1], kappa_values[0][0], kappa_values[1][0], kappa_values[2][0], color)
+            #self.revise_belief_base()
 
-    def calculate_verifying_worlds(self, conditional):
+
+    def calculate_kappa_values(self, new_sentence):
+        all_variables = get_variable_names_for_propositions()
+        variables = []
+        color = ""
+        for proposition in new_sentence.propositions[0][0]:
+            if issubclass(type(proposition), ColorProposition):
+                color = proposition.variable
+            else:
+                variables.append(proposition.variable)
+        
+        # For closed world assumption
+        # If closed world assumption is set to true, for not available fact, it will be assumed that the negation holds
+        # i.e if D is not in the setence, !D is assumed
+        # Otherwise (D v !D) is assumed, but (D v !D) is always true and can be ignored
+        if self.closed_world_assumption:
+            all_proposition_variable_names = get_variable_names_for_propositions()
+            for proposition in all_proposition_variable_names:
+                if not variables.__contains__(proposition) and not variables.__contains__("!" + proposition):
+                    variables.append("!"+proposition )
+        
+        # Sorting
+        remember_variables = variables
+        variables = []
+        for variable in remember_variables:
+            variables.append(variable.replace("!", ""))
+        variables.sort()
+        for old_variable in remember_variables:
+            index = variables.index(old_variable.replace("!", ""))
+            variables[index] = old_variable
+        
+        # Add placeholder * where the literl doesn' matter
+        replaced_variables = []
+        for variable in all_variables:
+            if variable not in variables:
+                replaced_variables.append("*")
+            else:
+                replaced_variables.append(variable)
+        variable_code = ""
+        for variable in replaced_variables:
+            if "!" in variable:
+                variable_code = variable_code +"0"
+            elif "*" in variable:
+                variable_code = variable_code +"*"
+            else:
+                variable_code = variable_code +"1"
+        conditional_variable_code = "1" if new_sentence.propositions[0][1].value == "X" else  "0"
         verifying_worlds = []
-        for possible_world in self.possible_worlds:
-            for proposition in conditional.antecedent:
-                index_of_propostion = self.variables.index(proposition.replace("!", ""))
-                if (proposition.__contains__("!") and possible_world[index_of_propostion] == 1) or (not proposition.__contains__("!") and possible_world[index_of_propostion] == 0):
-                    break
-            else:
-                index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
-                if (conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 1) or (not conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 0):
-                    continue
-                verifying_worlds.append(possible_world)
-        return verifying_worlds      
-
-    def calculate_falsifying_worlds(self, conditional):
         falsifying_worlds = []
-        for possible_world in self.possible_worlds:
-            for proposition in conditional.antecedent:
-                index_of_propostion = self.variables.index(proposition.replace("!", ""))
-                if (proposition.__contains__("!") and possible_world[index_of_propostion] == 1) or (not proposition.__contains__("!") and possible_world[index_of_propostion] == 0):
-                    break
-            else:
-                index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
-                if (conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 0) or (not conditional.consequence.__contains__("!") and possible_world[index_of_propostion] == 1):
-                    continue
-                falsifying_worlds.append(possible_world)
-        return falsifying_worlds      
+        not_applicable_worlds = []
 
-    def calculating_k_i_constraint(self, index, conditional, conditionals, kappa_vector):
-        # All worlds verifying i-th conditional
-        verifying_worlds = self.calculate_verifying_worlds(conditional)
-        # All worlds falsifying i-th conditional
-        falsifying_worlds = self.calculate_falsifying_worlds(conditional)
+        all_variable_codes = []
 
-        verification_sums = self.calculate_list_of_sums(index, conditionals, verifying_worlds)
-        falsifying_sums = self.calculate_list_of_sums(index, conditionals, falsifying_worlds)
-        # Calculating mimimum
+        indices = [i for i, x in enumerate(variable_code) if x == "*"]
+        combinations = [list(i) for i in itertools.product([0, 1], repeat=len(indices))]
+        for value in combinations:
+            new_variable_code = list(variable_code)
+            for i, index in enumerate(indices):
+                new_variable_code[index] = str(value[i])
+            all_variable_codes.append("".join(new_variable_code))
 
-        return (verification_sums, falsifying_sums)
+        for variable_code in all_variable_codes:
+            verifying_worlds.append((variable_code + conditional_variable_code, self.possible_worlds[color][variable_code + conditional_variable_code]))
 
-    def calculate_list_of_sums(self, i_index, conditionals, worlds):
-        list_of_sums = []
-        for world in worlds:
-            sum_of_kappa_j = []
-            for index, conditional in enumerate(conditionals):
-                if index != i_index:
-                    for proposition in conditional.antecedent:
-                        index_of_propostion = self.variables.index(proposition.replace("!", ""))
-                        if (proposition.__contains__("!") and world[index_of_propostion] == 1) or (not proposition.__contains__("!") and world[index_of_propostion] == 0):
-                            break
-                    else:
-                        index_of_propostion = self.variables.index(conditional.consequence.replace("!", ""))
-                        if (conditional.consequence.__contains__("!") and world[index_of_propostion] == 0) or (not conditional.consequence.__contains__("!") and world[index_of_propostion] == 1):
-                            continue
-                        sum_of_kappa_j.append(index)
-            list_of_sums.append(sum_of_kappa_j)
-        return list_of_sums
+        for variable_code in all_variable_codes:
+            negated_conditional_variable_code = "0" if conditional_variable_code == "1" else "1"
+            falsifying_worlds.append((variable_code + negated_conditional_variable_code, self.possible_worlds[color][variable_code + negated_conditional_variable_code]))
+
+        for world, value in self.possible_worlds[color].items():
+            is_not_applicable = True
+            for falsifying_world in falsifying_worlds:
+                if world == falsifying_world[0]:
+                    is_not_applicable = False
+            for verifying_world in verifying_worlds:
+                if world == verifying_world[0]:
+                    is_not_applicable = False
+            if is_not_applicable:
+                not_applicable_worlds.append((world, value))
+
+        kappa_values = []
+        min_value = None
+        for world in verifying_worlds:
+            if min_value is None or world[1] < min_value:
+                min_value = world[1]
+
+        kappa_values.append((verifying_worlds, min_value if min_value is not None else 0))    
+        
+        min_value = None
+        for world in falsifying_worlds:
+            if min_value is None or world[1] < min_value:
+                min_value = world[1]
+        kappa_values.append((falsifying_worlds, min_value if min_value is not None else 0))
+
+        for world in not_applicable_worlds:
+            if min_value is None or world[1] < min_value:
+                min_value = world[1]
+        kappa_values.append((not_applicable_worlds, min_value if min_value is not None else 0))    
+
+        return (kappa_values, color)
 
 
-    # Sentence([([proposition, proposition, ...], reward), ([proposition, proposition, ...], reward), ...], evidence)
-    # Belief Base list of Sentences
-    def create_conditionals(self, belief_base):
-        conditionals = []
-        for sentence in belief_base:
-            antecedent = []
-            for proposition in sentence.propositions[0][0]:
-                antecedent.append(proposition.variable)
-            conditional = Conditional(antecedent, sentence.propositions[0][1].value)
-            conditionals.append(conditional)
-        return conditionals
+    def solve_gamma_values(self, kappa_verifying_worlds, kappa_falsifying_worlds):
+        solution_not_found = True
+        y_minus = 1
+        y_plus = -1
+        while solution_not_found:
+            if y_minus - y_plus > kappa_verifying_worlds-kappa_falsifying_worlds:
+                return (y_minus, y_plus)
+            y_minus = y_minus + 1
+            y_plus = y_plus -1
 
-# Just needed for ConditionalBeliefRevision
-# Conditional([antecedent,...], consequence)
-class Conditional:
-    def __init__(self, antecedent, consequence):
-        self.antecedent = antecedent
-        self.consequence = consequence
+    def calculate_kappa_zero(self, y_plus, kappa_verifying_worlds, kappa_not_applicable_worlds):
+        return min((y_plus + kappa_verifying_worlds), kappa_not_applicable_worlds)
+
+    def update_kappa_values(self, kappa_zero, y_minus, y_plus, verifying_worlds, falsifying_worlds, not_applicable_worlds, color):
+        print("kappa_zero",kappa_zero)
+        print("y_minus",y_minus)
+        print("y_plus",y_plus)
+        for verifying_world in verifying_worlds:
+            self.possible_worlds[color][verifying_world[0]] = self.possible_worlds[color][verifying_world[0]] - kappa_zero + y_plus
+        for falsifying_world in falsifying_worlds:
+            self.possible_worlds[color][falsifying_world[0]] = self.possible_worlds[color][falsifying_world[0]] - kappa_zero + y_minus
+        for not_applicable_world in not_applicable_worlds:
+            self.possible_worlds[color][not_applicable_world[0]] = self.possible_worlds[color][not_applicable_world[0]] - kappa_zero
+        print(self.possible_worlds)
+
+
 
 # Belief Revision with Explanations
 # See: Explanations, belief revision and defeasible reasoning

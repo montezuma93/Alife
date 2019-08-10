@@ -396,100 +396,121 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.346, another_revised_belief_base[3].evidence, 2)
 
  ############################### CONDITIONAL BELIEF REVISION ##############################################
-    '''
+    
+    def test_create_possible_worlds_while_init(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
+        self.assertEqual(4, len(self.belief_revision_system.possible_worlds))
+        self.assertEqual(16, len(self.belief_revision_system.possible_worlds["G"]))
+        
+    
 
     def test_conditional_belief_revision_create_conditionals(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+        new_sentence = Sentence([([ColorGreen()], Reward.toxic)], 1)
+        kappa_values = self.belief_revision_system.calculate_kappa_values(new_sentence)
+        self.assertEqual(0, kappa_values[0][0][1])
+        self.assertEqual(0, kappa_values[0][1][1])
+        self.assertEqual(0, kappa_values[0][2][1])
 
-        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
-        self.assertEqual(2, len(conditionals))
-        self.assertEqual(["R", "D", "G"], conditionals[0].antecedent)
-        self.assertEqual("X", conditionals[0].consequence)
-        self.assertEqual(["R", "!D", "G"], conditionals[1].antecedent)
-        self.assertEqual("!X", conditionals[1].consequence)
+    def test_conditional_belief_revision_create_conditionals(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-    def test_create_possible_worlds(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+        new_sentence = Sentence([([NextToRock(), ColorGreen(), DayProposition()], Reward.nontoxic)], 1)
+        kappa_values = self.belief_revision_system.calculate_kappa_values(new_sentence)
+        self.assertEqual(0, kappa_values[0][0][1])
+        self.assertEqual(0, kappa_values[0][1][1])
+        self.assertEqual(0, kappa_values[0][2][1])
+    
+    def test_conditional_belief_revision_create_conditionals(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-        sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
-        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_possible_worlds()
-        possible_worlds = self.belief_revision_system.possible_worlds
+        new_sentence = Sentence([([NextToRock(), ColorGreen()], Reward.nontoxic)], 1)
 
-        self.assertEqual(64, len(possible_worlds))
-        self.assertEqual([0, 0, 0, 1, 0, 0, 0, 0], possible_worlds[0])
+        kappa_values = self.belief_revision_system.calculate_kappa_values(new_sentence)
+        self.assertEqual(0, kappa_values[0][0][1])
+        self.assertEqual(0, kappa_values[0][1][1])
+        self.assertEqual(0, kappa_values[0][2][1])
+    
+    def test_conditional_belief_revision_create_conditionals_including_negation(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
+        new_sentence = Sentence([([NextToRock(), ColorGreen(), NightProposition()], Reward.nontoxic)], 1)
 
-    def test_calculate_verifying_worlds(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+        kappa_values = self.belief_revision_system.calculate_kappa_values(new_sentence)
+        self.assertEqual(0, kappa_values[0][0][1])
+        self.assertEqual(0, kappa_values[0][1][1])
+        self.assertEqual(0, kappa_values[0][2][1])
+        
+    def test_conditional_belief_revision_create_conditionals_with_closed_world_assumption(self):
+        self.belief_revision_system = ConditionalBeliefRevision([True])
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+        new_sentence = Sentence([([NextToRock(), ColorGreen(), NightProposition()], Reward.nontoxic)], 1)
 
-        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_possible_worlds()
-        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
+        kappa_values = self.belief_revision_system.calculate_kappa_values(new_sentence)
+        self.assertEqual(0, kappa_values[0][0][1])
+        self.assertEqual(0, kappa_values[0][1][1])
+        self.assertEqual(0, kappa_values[0][2][1])
+            
+    def test_inequalities_solver_in_beginning(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
+        self.assertEqual((1, -1),self.belief_revision_system.solve_gamma_values(0, 0))
 
-        verifying_worlds = self.belief_revision_system.calculate_verifying_worlds(conditionals[0])
-        self.assertEqual(2, len(verifying_worlds))
-        self.assertEqual([1,0,0,0,1,0,1,1], verifying_worlds[0])
-        self.assertEqual([1,0,0,0,1,1,1,1], verifying_worlds[1])
+    def test_inequalities_solver_anothter(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
+        self.assertEqual((1, -1), self.belief_revision_system.solve_gamma_values(0,2))
 
+    def test_inequalities_solver_one_more(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
+        self.assertEqual((2, -2), self.belief_revision_system.solve_gamma_values(3,1))
 
-    def test_calculate_falsifying_worlds(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+ 
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+    def test_first_sentence_revision(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_possible_worlds()
-        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
+        new_sentences = [Sentence([([ColorGreen()], Reward.toxic)], 1)]
 
-        falsifying_worlds = self.belief_revision_system.calculate_falsifying_worlds(conditionals[0])
-        self.assertEqual(2, len(falsifying_worlds))
-        self.assertEqual([1,0,0,0,1,0,1,0], falsifying_worlds[0])
-        self.assertEqual([1,0,0,0,1,1,1,0], falsifying_worlds[1])
+        self.belief_revision_system.revise_belief_base(new_sentences)
+        
 
-    def test_calculate_list_of_sums_for_k_i_and_falsifying_worlds(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+        new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
-
-        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_possible_worlds()
-        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
-
-        falsifying_worlds = self.belief_revision_system.calculate_falsifying_worlds(conditionals[0])
-        # Calculate all k_j for index i for falsifyied worlds
-        list_of_sums_k_0 = self.belief_revision_system.calculate_list_of_sums(0, conditionals, falsifying_worlds)
-        list_of_sums_k_1 = self.belief_revision_system.calculate_list_of_sums(1, conditionals, falsifying_worlds)
+        self.belief_revision_system.revise_belief_base(new_sentences)
 
 
-    def test_calculate_list_of_sums_for_k_i_and_verified_worlds(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+    def test_first_sentence_revision(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+        new_sentences = [Sentence([([ColorGreen()], Reward.toxic)], 1)]
 
-        self.belief_revision_system.variables = get_variable_names_for_all_propositions()
-        self.belief_revision_system.create_possible_worlds()
-        conditionals = self.belief_revision_system.create_conditionals(old_belief_base)
+        self.belief_revision_system.revise_belief_base(new_sentences)
+        
 
-        verified_worlds = self.belief_revision_system.calculate_verifying_worlds(conditionals[0])
-        # Calculate all k_j for index i for falsifyied worlds
-        list_of_sums_k_0 = self.belief_revision_system.calculate_list_of_sums(0, conditionals, verified_worlds)
-        list_of_sums_k_1 = self.belief_revision_system.calculate_list_of_sums(1, conditionals, verified_worlds)
+        new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.toxic)], 1)]
 
-    def test_create_constraints(self):
-        self.belief_revision_system = ConditionalBeliefRevision()
+        self.belief_revision_system.revise_belief_base(new_sentences)
+    
+    def test_first_sentence_revision_second_sentence_is_not_toxic(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
 
-        old_belief_base = [Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1),
-         Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 1)]
+        new_sentences = [Sentence([([ColorGreen()], Reward.toxic)], 1)]
 
-        constraints = self.belief_revision_system.calculate_kappa_values(old_belief_base)
-    '''
+        self.belief_revision_system.revise_belief_base(new_sentences)
+        
+
+        new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)
+    
+    def test_first_sentence_revision_with_closed_world_assumption(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])
+
+        new_sentences = [Sentence([([ColorGreen()], Reward.toxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)
+        
+
+        new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)

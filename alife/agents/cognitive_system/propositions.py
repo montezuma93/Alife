@@ -114,8 +114,9 @@ class EastOfProposition(SpatialProposition):
         self.agent = referent
         self.agent = referent
 
+# Sorted
 def get_variable_names_for_propositions():
-    return ["R", "T", "D"]
+    return ["D", "R", "T"]
 
 def get_variable_names_for_color_propositions():
     return ["G", "O", "B", "P"]
