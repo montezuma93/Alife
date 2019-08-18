@@ -5,12 +5,13 @@ from .decision_making_system import *
 from .observation_to_proposition_system import *
 from .belief_revision_system import *
 from .action import Action
+from .mental_map import MentalMap
 import logging
 
 class Cognitive_System():
 
     def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str,
-         observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args):
+         has_mental_map, observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args):
 
 
         self.factor_for_communication_sentenes = 0.5
@@ -56,8 +57,11 @@ class Cognitive_System():
         else:
             print("Decision Making System not found")
 
+        self.mental_map = None
+        if has_mental_map == "True":
+            self.mental_map = MentalMap()
         self.long_term_memory = LongTermMemory()
-        self.communication_system = CommunicationSystem()
+        self.communication_system = CommunicationSystem(self.belief_revision_system)
 
         logging.info("Cognitive System initialized")
 
@@ -86,9 +90,8 @@ class Cognitive_System():
                 logging.info("Updated Decision Making Policy")
                 if type(self.decision_making_system) is QLearningDecisionMakingSystem:
                     logging.info("Q Table: \r\n %s" % (self.decision_making_system.q_table))
-                filtered_sentences = self.communication_system.filter_sentences(generated_propositions)
-                logging.info("Filtered Sentences: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in filtered_sentences])))
-                revised_knowledge = self.belief_revision_system.revise_belief_base(filtered_sentences, self.long_term_memory.stored_sentences)
+                logging.info("Sentences to revise belief base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in generated_propositions])))
+                revised_knowledge = self.communication_system.communicate(self.long_term_memory.stored_sentences, generated_propositions)
                 self.long_term_memory.update(revised_knowledge)
                 logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
                 logging.info("Belief was revised, Belief Base was updated, Decision Making Policy was updated")
@@ -103,8 +106,8 @@ class Cognitive_System():
                 return action_chosen
         # Walk arround random, or better prefere places where you wasnt before and later use spatial knowlege to look for good plants
         else:
-            choice = random.choices(population=[Action.move_towards, Action.move_elsewhere], weights=[0.8, 0.2], k=1)
-            return choice[0]
+            action_chosen = action.random
+            return action_chosen
 
     def communicate(self, agent, other_agent):
         logging.info("Received communication request for agent %s from agent %s" % (agent.id_num, other_agent.id_num))
