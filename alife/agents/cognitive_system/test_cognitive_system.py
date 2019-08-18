@@ -9,7 +9,7 @@ class CognitiveSystemTest(TestCase):
 
     def test_first_sentence_single_proposition_system(self):
 
-        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':[], 'DecisionMakingSystem_Args':[]}")
+        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','MentalMap':'True','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['EVIDENCE'], 'DecisionMakingSystem_Args':[]}")
         self.agent = CognitiveEnvolver(None, None, 0, **kwargs)
 
         # Observation without reward
@@ -48,7 +48,7 @@ class CognitiveSystemTest(TestCase):
         self.assertEqual(7, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
 
     def test_communcation(self):
-        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':[], 'DecisionMakingSystem_Args':[]}")
+        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','MentalMap':'True','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['EVIDENCE'], 'DecisionMakingSystem_Args':[]}")
         self.agent = CognitiveEnvolver(None, None, 0, **kwargs)
         self.other_agent = CognitiveEnvolver(None, None, 0, **kwargs)
 

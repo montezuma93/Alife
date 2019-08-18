@@ -289,7 +289,7 @@ class BeliefRevisionTest(TestCase):
 
         revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], old_belief_base)
         self.assertEqual(1, len(revised_belief_base))
-        self.assertAlmostEqual(0.394, revised_belief_base[0].evidence, 2)
+        self.assertAlmostEqual(0.318, revised_belief_base[0].evidence, 2)
     
     def test_probability_belief_revision_without_closed_world_assumption(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, False])
@@ -335,9 +335,9 @@ class BeliefRevisionTest(TestCase):
 
         revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], old_belief_base)
         self.assertEqual(3, len(revised_belief_base))
-        self.assertAlmostEqual(0.405, revised_belief_base[0].evidence, 2)
-        self.assertAlmostEqual(0.405, revised_belief_base[1].evidence, 2)
-        self.assertAlmostEqual(0.333, revised_belief_base[2].evidence, 2)
+        self.assertAlmostEqual(0.188, revised_belief_base[0].evidence, 2)
+        self.assertAlmostEqual(0.188, revised_belief_base[1].evidence, 2)
+        self.assertAlmostEqual(0.26, revised_belief_base[2].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_adding_sentence_again(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, True])
@@ -351,8 +351,8 @@ class BeliefRevisionTest(TestCase):
 
         revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], old_belief_base)
         self.assertAlmostEqual(2, len(revised_belief_base))
-        self.assertAlmostEqual(0.449, revised_belief_base[0].evidence, 2)
-        self.assertAlmostEqual(0.405, revised_belief_base[1].evidence, 2)
+        self.assertAlmostEqual(0.231, revised_belief_base[0].evidence, 2)
+        self.assertAlmostEqual(0.188, revised_belief_base[1].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_adding_sentence_again_multiple_times(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, True])
@@ -370,8 +370,8 @@ class BeliefRevisionTest(TestCase):
 
         another_revised_belief_base = self.belief_revision_system.revise_belief_base([another_sentence], revised_belief_base)
         self.assertAlmostEqual(2, len(another_revised_belief_base))
-        self.assertAlmostEqual(0.493, another_revised_belief_base[0].evidence, 2)
-        self.assertAlmostEqual(0.373, another_revised_belief_base[1].evidence, 2)
+        self.assertAlmostEqual(0.293, another_revised_belief_base[0].evidence, 2)
+        self.assertAlmostEqual(0.173, another_revised_belief_base[1].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_multiple_times(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, True])
@@ -390,10 +390,10 @@ class BeliefRevisionTest(TestCase):
         another_revised_belief_base = self.belief_revision_system.revise_belief_base([another_sentence], revised_belief_base)
 
         self.assertEqual(4, len(another_revised_belief_base))
-        self.assertAlmostEqual(0.373, another_revised_belief_base[0].evidence, 2)
-        self.assertAlmostEqual(0.373, another_revised_belief_base[1].evidence, 2)
-        self.assertAlmostEqual(0.306, another_revised_belief_base[2].evidence, 2)
-        self.assertAlmostEqual(0.346, another_revised_belief_base[3].evidence, 2)
+        self.assertAlmostEqual(0.173, another_revised_belief_base[0].evidence, 2)
+        self.assertAlmostEqual(0.173, another_revised_belief_base[1].evidence, 2)
+        self.assertAlmostEqual(0.24, another_revised_belief_base[2].evidence, 2)
+        self.assertAlmostEqual(0.28, another_revised_belief_base[3].evidence, 2)
 
  ############################### CONDITIONAL BELIEF REVISION ##############################################
     

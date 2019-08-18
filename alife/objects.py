@@ -332,7 +332,7 @@ class Creature(Thing):
         angle = 0
         speed = 0
         # Calculate angle to the plant
-        if action.name == Action.move_towards.name:
+        if action.name == Action.eat.name:
             if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
                 angle = 0
                 speed = 3
@@ -346,27 +346,23 @@ class Creature(Thing):
                 speed = 0
             else:
                 angle = 0
-                speed = 1
-        # Calculate the oposite angle to the plant
-        elif action.name == Action.move_elsewhere.name:
-            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
-                angle = math.pi
-                speed = 3
-            # Turn to the right
-            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
-                angle = 0.1
-                speed = 0
-            # Turn to the left
-            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
-                angle = -0.1
-                speed = 0
-            else:
-                angle = math.pi
                 speed = 1
         # TODO Prefere Places where bug not have been before, will be done after adding Spatial Knowledge
-        elif action.name == Action.random.name:
-            angle = random.uniform(-pi, pi)
-            speed = 1
+        elif action.name == Action.explore.name:
+            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = math.pi
+                speed = 3
+            # Turn to the right
+            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
+                angle = 0.1
+                speed = 0
+            # Turn to the left
+            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+                angle = -0.1
+                speed = 0
+            else:
+                angle = math.pi
+                speed = 1
         # The moment after revising and updating policies
         else:
             angle = 0

@@ -264,14 +264,8 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
     
     def calculate_alpha_and_beta(self, sentence_key):
         if not self.closed_world_assumption and self.uses_occams_razor_principle:
-            # Total different combinations = 96
-            # () = 2*4 = 8 * length of 2 -> 8/96 = 8,33 %
-            # (T, R, D, !D) = 4*2*4 = 32 * length of 3 -> 32/96 = 33,33 %
-            # (TR, TD, RD, T!D, R!D) = 5*2*4 = 40 * length of 4 -> 40/96 = 41,66 %
-            # (TRD, TR!D) = 2*2*4 = 16 * length of 5 -> 16/96 = 16,66 %
-            total_different_combinations = 96
-            proposition_length_to_mean = {2:8, 3:32, 4:40, 5:16}
-            mean = proposition_length_to_mean.get(len(sentence_key.replace('!','')))/total_different_combinations
+            proposition_length_to_mean = {2:1/2, 3:1/4, 4:1/6, 5:1/12}
+            mean = proposition_length_to_mean.get(len(sentence_key.replace('!','')))
             alpha = mean* self.pseudo_sample_size
             beta = (1-mean) *self.pseudo_sample_size
             

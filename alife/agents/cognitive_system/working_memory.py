@@ -9,6 +9,7 @@ class WorkingMemoryWithEvidence:
     def __init__(self, working_memory_system_args):
         #Between 1 and 100
         self.percentage_amount_for_retrieving = 10
+        self.evidence_interpretation = working_memory_system_args[0]
 
     def set_percentage_amount_for_retrieving(self, percentage_amount_for_retrieving):
         if percentage_amount_for_retrieving < 1 or percentage_amount_for_retrieving > 100:
@@ -17,7 +18,12 @@ class WorkingMemoryWithEvidence:
 
     def retrieve_knowledge(self, new_sentences: list, long_term_memory):
         stored_sentences = long_term_memory.stored_sentences
-        stored_sentences.sort(key=lambda sentence: sentence.evidence, reverse=True)
+        if self.evidence_interpretation == EvidenceInterpretation.evidence.value or self.evidence_interpretation == EvidenceInterpretation.probability.value:
+            stored_sentences.sort(key=lambda sentence: sentence.evidence, reverse=True)
+        elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
+            stored_sentences.sort(key=lambda sentence: sentence.evidence, reverse=False)
+        else:
+            print("No availaible Interpretation")
         total_amount_of_sentences = len(stored_sentences)
         amount_of_sentences_to_return = math.ceil(total_amount_of_sentences /100 * self.percentage_amount_for_retrieving)
         available_sentences = []
@@ -33,8 +39,13 @@ class WorkingMemoryWithActivationSpreading:
 
     def __init__(self, working_memory_system_args):
         self.initial_activation_value = 1
+        # Just used for evidence and probability interpretation
         self.base_activation_decay = -0.5
+        # Percentage of evidence used
+        # For probability factor to multiply proability with
+        # For ranking penalty for rank
         self.include_percentage_evidence_value = 10
+        self.evidence_interpretation = working_memory_system_args[0]
 
     def set_include_percentage_evidence_value(self, include_percentage_evidence_value):
         self.include_percentage_evidence_value = include_percentage_evidence_value
@@ -45,7 +56,10 @@ class WorkingMemoryWithActivationSpreading:
         self.init_activation_value_property(stored_sentences)
         if new_sentences:
             self.spread_activation(new_sentences, stored_sentences)
-        self.add_calculated_base_activation(stored_sentences, actual_time_step)
+        # Just can calculate base activation for evidence and probability
+        # For ranking function all sentences are in belief base with same storage time
+        if self.evidence_interpretation == EvidenceInterpretation.evidence.value or self.evidence_interpretation == EvidenceInterpretation.probability.value:
+            self.add_calculated_base_activation(stored_sentences, actual_time_step)
         if self.include_percentage_evidence_value > 0:
             self.add_evidence_to_activation_value(stored_sentences)
         retrieval_threshold = self.calculate_threshold(stored_sentences)
@@ -70,9 +84,21 @@ class WorkingMemoryWithActivationSpreading:
                         sentence.activation_value = sentence.activation_value + activation_value_to_add
 
     def add_evidence_to_activation_value(self, stored_sentences):
-        for sentence in stored_sentences:
-            evidence_acitvation_value = sentence.evidence /100*self.include_percentage_evidence_value
-            sentence.activation_value = sentence.activation_value + evidence_acitvation_value
+
+        if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
+            for sentence in stored_sentences:
+                evidence_acitvation_value = sentence.evidence /100 * self.include_percentage_evidence_value
+                sentence.activation_value = sentence.activation_value + evidence_acitvation_value
+        elif self.evidence_interpretation == EvidenceInterpretation.probability.value:
+            for sentence in stored_sentences:
+                probability_factor = sentence.evidence * self.include_percentage_evidence_value
+                sentence.activation_value = sentence.activation_value + probability_factor
+        elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
+            for sentence in stored_sentences:
+                ranking_factor = sentence.evidence * self.include_percentage_evidence_value
+                sentence.activation_value = sentence.activation_value - ranking_factor
+        else:
+            print("No availaible Interpretation")
     
     def add_calculated_base_activation(self, stored_sentences, actual_time_step):
         for sentence in stored_sentences:
@@ -99,3 +125,8 @@ class WorkingMemoryWithActivationSpreading:
                 available_sentences.append(sentence)
         return available_sentences
 
+
+class EvidenceInterpretation(Enum):
+    probability= "PROBABILITY"
+    evidence= "EVIDENCE"
+    ranking="RANKING"
