@@ -181,7 +181,7 @@ class FormalBeliefRevision(BeliefRevisionSystem):
         return True
 
     def calculate_b_m_rank(self, sentence_truth_table, belief_base):
-        belief_base_sentences = sorted(belief_base, key=lambda x: x.evidence, reverse=True)
+        belief_base_sentences = sorted(belief_base, key=lambda x: x.evidence, reverse=False)
 
         next_index_to_check = len(belief_base_sentences)-1
         while next_index_to_check >= 0:
@@ -195,7 +195,7 @@ class FormalBeliefRevision(BeliefRevisionSystem):
             # Check B entails varphi
             belief_base_truth_table_with_at_least_evidence = self.create_truth_table_for_belief_base(belief_base_sentences_with_at_least_evidence)
             if self.belief_base_infers_sentence(belief_base_truth_table_with_at_least_evidence, sentence_truth_table):
-                return belief_base_sentences[last_index_which_entails_new_sentence].evidence
+                return evidence
         return belief_base_sentences[0].evidence
 
   
@@ -431,9 +431,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
         return min((y_plus + kappa_verifying_worlds), kappa_not_applicable_worlds)
 
     def update_kappa_values(self, kappa_zero, y_minus, y_plus, verifying_worlds, falsifying_worlds, not_applicable_worlds, color):
-        print("kappa_zero",kappa_zero)
-        print("y_minus",y_minus)
-        print("y_plus",y_plus)
         for verifying_world in verifying_worlds:
             self.possible_worlds[color][verifying_world[0]] = self.possible_worlds[color][verifying_world[0]] - kappa_zero + y_plus
         for falsifying_world in falsifying_worlds:
@@ -445,7 +442,6 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             if color_world != color:
                 for propositions, ranking in possible_world.items():
                     self.possible_worlds[color_world][propositions] = self.possible_worlds[color_world][propositions] - kappa_zero
-        print(self.possible_worlds)
 
 
     def map_possible_worlds_to_belief_base(self):

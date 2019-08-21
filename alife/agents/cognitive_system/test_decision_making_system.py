@@ -2,81 +2,69 @@ from unittest import TestCase
 from .decision_making_system import HumanLikeDecisionMakingUnderUncertaintySystem, QLearningDecisionMakingSystem
 from .propositions import *
 from .action import *
+import math
  
 
 class DecisionMakingSystemTest(TestCase):
 
 ####################################### HUMAN LIKE DECISION MAKING UNDER UNCERTAINTY SYSTEM  ##############################
 
-    def test_normalize_available_sentences(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([0])
+    def test_make_decision_decision_evidence(self):
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0, EvidenceInterpretation.evidence])
 
-        sentence_1 = Sentence([([ColorGreen()], Reward.toxic)], 4)
-        sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 3)
-        sentence_3 = Sentence([([NightProposition(), ColorGreen()], Reward.nontoxic)], 1)
-        sentence_4 = Sentence([([NextToRock(), DayProposition(), ColorBlue()], Reward.toxic)], 0.1)
+        sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 5)
+        sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 2)
+        sentence_3 = Sentence([([DayProposition(), ColorGreen()], Reward.nontoxic)], 3)
 
-        normalized_sentences = self.decision_making_system.normalize_sentences([sentence_1, sentence_2, sentence_3, sentence_4])
+        observations = [Sentence([([ColorGreen(), NextToRock()], Reward.none)], 1), Sentence([([ColorGreen()], Reward.none)], 1)]
 
-        self.assertEqual(4, sentence_1.evidence)
-        self.assertAlmostEqual(4/ (4/(1-self.decision_making_system.epsilon)), normalized_sentences[0].evidence)
-        self.assertAlmostEqual(0.74925, normalized_sentences[1].evidence)
-        self.assertAlmostEqual(0.24975, normalized_sentences[2].evidence)
-        self.assertAlmostEqual(0.024975, normalized_sentences[3].evidence)
+        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3])
+        self.assertEqual(Action.explore, action)
 
-    def test_make_decision(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1])
+    def test_make_decision_decision_probability(self):
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  0, EvidenceInterpretation.probability])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 0.1)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
-        sentence_3 = Sentence([([DayProposition(), ColorGreen()], Reward.nontoxic)], 0.3)
-        sentence_4 = Sentence([([NextToRock(), DayProposition(), ColorBlue()], Reward.toxic)], 0.4)
-        sentence_5 = Sentence([([NextToRock(), NightProposition(), ColorBlue()], Reward.nontoxic)], 0.5)
+        sentence_3 = Sentence([([ColorGreen() ], Reward.toxic)], 0.3)
 
-        observations = [[ColorGreen(), NextToRock(), DayProposition()], [ColorGreen(), NextToRock()], [ColorGreen(), DayProposition()], [ColorGreen()]]
+        observations = [Sentence([([ColorGreen(), NextToRock()], Reward.none)], 1), Sentence([([ColorGreen()], Reward.none)], 1)]
 
-        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5])
-        self.assertEqual(Action.eat, action)
+        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3])
+        self.assertEqual(Action.explore, action)
 
-    def test_make_decision_evidence_it_is_toxic(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([0])
 
-        sentence_1 = Sentence([([ColorGreen()], Reward.toxic)], 0.9)
+    def test_make_decision_decision_ranking(self):
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0,  EvidenceInterpretation.ranking])
+
+        sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 0)
+        sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 2)
+        sentence_3 = Sentence([([ColorGreen() ], Reward.toxic)], 3)
+
+        observations = [Sentence([([ColorGreen(), NextToRock()], Reward.none)], 1), Sentence([([ColorGreen()], Reward.none)], 1)]
+
+        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3])
+        self.assertEqual(Action.explore, action)
+
+    def test_entropy(self):
+
+        self.assertAlmostEqual(0.6931, (0.5 * math.log(0.5) + 0.5 * math.log(0.5)) * -1, 3)
+
+
+    def test_make_decision_decision_probability(self):
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  1, EvidenceInterpretation.probability])
+        self.decision_making_system.utility_table = {
+            "eat":20,
+            "explore":5
+        }
+        sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 0.9)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
-        sentence_3 = Sentence([([DayProposition(), ColorGreen()], Reward.nontoxic)], 0.1)
-        sentence_4 = Sentence([([NextToRock(), DayProposition(), ColorBlue()], Reward.nontoxic)], 0.1)
-        sentence_5 = Sentence([([NextToRock(), NightProposition(), ColorBlue()], Reward.nontoxic)], 0.5)
+        sentence_3 = Sentence([([ColorGreen() ], Reward.toxic)], 0.1)
 
-        observations = [[ColorGreen(), NextToRock(), DayProposition()], [ColorGreen(), NextToRock()], [ColorGreen(), DayProposition()], [ColorGreen()]]
+        observations = [Sentence([([ColorGreen(), NextToRock()], Reward.none)], 1), Sentence([([ColorGreen()], Reward.none)], 1)]
 
-        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5])
-
+        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3])
         self.assertEqual(Action.eat, action)
-
-    def test_make_decision_evidence_it_is_toxic_with_risk_aversion(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1])
-
-        sentence_1 = Sentence([([ColorGreen()], Reward.toxic)], 0.9)
-        sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
-        sentence_3 = Sentence([([DayProposition(), ColorGreen()], Reward.nontoxic)], 0.1)
-        sentence_4 = Sentence([([NextToRock(), DayProposition(), ColorBlue()], Reward.nontoxic)], 0.1)
-        sentence_5 = Sentence([([NextToRock(), NightProposition(), ColorBlue()], Reward.nontoxic)], 0.5)
-
-        observations = [[ColorGreen(), NextToRock(), DayProposition()], [ColorGreen(), NextToRock()], [ColorGreen(), DayProposition()], [ColorGreen()]]
-
-        action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3, sentence_4, sentence_5])
-        self.assertEqual(Action.eat, action)
-
-    def test_make_decision_evidence_with_empty_knowledge_base(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([0])
-
-        observations = [[ColorGreen(), NextToRock(), DayProposition()], [ColorGreen(), NextToRock()], [ColorGreen(), DayProposition()], [ColorGreen()]]
-
-        action = self.decision_making_system.make_decision(observations, [])
-        self.assertEqual(Action.eat, action)
-
-
-
 ####################################### Q LEARNING SYSTEM  ##############################
     
 

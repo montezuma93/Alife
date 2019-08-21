@@ -131,3 +131,13 @@ class Reward(Enum):
     toxic= "X"
     nontoxic= "!X"
     none="~"
+
+class Health(Enum):
+    moreThanHalf= ">=50"
+    lessThanHalf= "<50"
+    lessThanQuarter= "<25"
+
+class EvidenceInterpretation(Enum):
+    probability= "PROBABILITY"
+    evidence= "EVIDENCE"
+    ranking="RANKING"

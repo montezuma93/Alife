@@ -126,7 +126,4 @@ class WorkingMemoryWithActivationSpreading:
         return available_sentences
 
 
-class EvidenceInterpretation(Enum):
-    probability= "PROBABILITY"
-    evidence= "EVIDENCE"
-    ranking="RANKING"
+

@@ -101,6 +101,8 @@ def create_random_txt_for_map():
             intersected_list = reduce(np.intersect1d, (possible_right_terrain, possible_bottom_terrain, possible_last_row_terrain, possible_last_column_terrain))
             '''If no possible tile was found, start again, otherwise choose a tile'''
             if len(intersected_list) > 0:
+                if ' ' in intersected_list:
+                    intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' '])
                 MAP[row, column] = random.choice(intersected_list)
             else:
                 need_restart = True

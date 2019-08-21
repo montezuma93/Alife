@@ -130,7 +130,7 @@ class CognitiveEnvolver(Agent):
            kwargs.get("DecisionMakingSystem_Args"))
         
 
-    def act(self, obs, nearby_objects, is_day_time, reward,done=False):
+    def act(self, obs, nearby_objects, is_day_time, reward, world, pos, currentHealth, done=False):
         """
             Act.
 
@@ -153,7 +153,7 @@ class CognitiveEnvolver(Agent):
         # Create prposition
         actual_reward = self._cast_to_reward(reward)
         propositions = self._cast_to_proposition(merged_nearby_objects, is_day_time)
-        action = self.cognitive_system.act(self, propositions[0], propositions[1], actual_reward)
+        action = self.cognitive_system.act(self, propositions[0], propositions[1], actual_reward, world, pos, currentHealth)
         return action
 
     def communicate(self, other_agent):

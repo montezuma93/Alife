@@ -5,7 +5,7 @@ from .action import *
 from .truths.truthtable import *
 from ..evolution import *
 
-class CognitiveSystemTest(TestCase):
+class CognitiveSystemTest():
 
     def test_first_sentence_single_proposition_system(self):
 

@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import *
+import numpy as np
 
+from enum import Enum
 from utils import *
 from graphics import build_image_png as build_image, build_image_bank
 from graphics import rgb2color, id2rgb, COLOR_BLACK, COLOR_WHITE
@@ -8,7 +10,8 @@ from graphics import draw_banner
 from agents.spaces import BugSpace # the space of the environment (for the agent)
 from agents.agent import Agent 
 
-from agents.cognitive_system.action import Action
+from agents.cognitive_system.action import Action, CompleteAction
+from agents.cognitive_system.propositions import Health
 set_printoptions(precision=4)
 
 # Types of Sprites/Things/Objects
@@ -60,7 +63,7 @@ def burn(angle,speed,size):
     '''
     return max(1.,abs(speed)+5.*abs(angle))**2 * (size / 1000.0)
 
-#
+
 
 class Thing(pygame.sprite.DirtySprite):
     '''
@@ -208,6 +211,7 @@ class Creature(Thing):
         self.energy_limit = energy
         self.intoxicated = False
         self.energy = energy * INIT_ENERGY
+        self.init_energy = energy * INIT_ENERGY
         self.selected = None
         # Attributes
         self.unitv = unitv(random.randn(2))
@@ -309,19 +313,26 @@ class Creature(Thing):
         # Reinforcement learning
         reward = self.energy - self._energy              # reward = energy diff from last timestep
         self._energy = self.energy                       # (save the current energy)
-        action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward) # call upon the agent to act
+        x, y = world.pos2grid(self.pos)
+
+        currentHealth = Health.moreThanHalf
+        if self.energy < self.init_energy/2 and self.energy >= self.init_energy/4:
+            currentHealth = Health.lessThanHalf
+        elif self.energy < self.init_energy/4:
+            currentHealth = Health.lessThanQuarter
+        action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward, world, self.pos, currentHealth) # call upon the agent to act
         if self.selected is not None:
             action = self.selected
         else:
             # Map chosen action to new action
-            action = self.map_chosen_action_to_angle_and_speed(action, nearby_objects)
+            action = self.map_chosen_action_to_angle_and_speed(world, action, nearby_objects)
         # Carry out the actions on the World
         self.env_step(action)
 
         # Wrap around the world
         self.wrap(world)
 
-    def map_chosen_action_to_angle_and_speed(self, action, nearby_objects):
+    def map_chosen_action_to_angle_and_speed(self, world, action, nearby_objects):
         # Nearby object helps to find out the angle to choose
         # nearby_objects[0] = Main | nearby_objects[1] = Left | nearby_objects[2] = Right 
 
@@ -332,38 +343,44 @@ class Creature(Thing):
         angle = 0
         speed = 0
         # Calculate angle to the plant
-        if action.name == Action.eat.name:
-            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+        if action.intension.name == Action.eat.name:
+            if any("3" in nearby_objects[1]) and any("3" in nearby_objects[2]):
                 angle = 0
-                speed = 3
+                speed = 2
             # Turn to the left
-            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
+            elif any("3" in nearby_objects[1]) and not any("3" in nearby_objects[2]):
                 angle = -0.1
-                speed = 0
+                speed = 0.1
             # Turn to the right
-            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
+            elif not any("3" in nearby_objects[1]) and any("3" in nearby_objects[2]):
                 angle = 0.1
-                speed = 0
+                speed = 0.1
             else:
                 angle = 0
                 speed = 1
         # TODO Prefere Places where bug not have been before, will be done after adding Spatial Knowledge
-        elif action.name == Action.explore.name:
-            if any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
-                angle = math.pi
-                speed = 3
-            # Turn to the right
-            elif any("3" in any_object for any_object in nearby_objects[1]) and not any("3" in any_object for any_object in nearby_objects[2]):
-                angle = 0.1
-                speed = 0
-            # Turn to the left
-            elif not any("3" in any_object for any_object in nearby_objects[1]) and any("3" in any_object for any_object in nearby_objects[2]):
-                angle = -0.1
-                speed = 0
-            else:
-                angle = math.pi
+        elif action.intension.name == Action.explore.name:
+            if action.location is not None:
+                location_wanted_x,location_wanted_y  = world.grid2pos(action.location)
+                vector_wanted = (location_wanted_x- self.pos[0], location_wanted_y- self.pos[1])
+                angle = angle_between([location_wanted_x, location_wanted_y], [self.pos[0], self.pos[1]])
                 speed = 1
-        # The moment after revising and updating policies
+            else:
+                if any("3"  in nearby_objects[1]) and any("3" in nearby_objects[2]):
+                    angle = math.pi
+                    speed = 2
+                # Turn to the right
+                elif any("3" in nearby_objects[1]) and not any("3" in nearby_objects[2]):
+                    angle = 0.1
+                    speed = 2
+                # Turn to the left
+                elif not any("3"  in nearby_objects[1]) and any("3"  in nearby_objects[2]):
+                    angle = -0.1
+                    speed = 2
+                else:
+                    angle = 0.01
+                    speed = 2
+                # The moment after revising and updating policies
         else:
             angle = 0
             speed = 0
@@ -440,6 +457,15 @@ class Creature(Thing):
         pygame.draw.line(surface, COLOR_WHITE, self.pos-20, [self.pos[0]-20+(self.observation[IDX_ENERGY]*40),self.pos[1]-20], 5)
 
 
+
+def unit_vector(vector):
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 def get_nearby_objects(agent, world):
     nearby_objects_main = []
     nearby_objects_left = []
@@ -468,3 +494,4 @@ def get_nearby_objects(agent, world):
                     if(olap > 0):
                         nearby_objects_left.append(things[i].ID) if things[i].ID not in nearby_objects_left else nearby_objects_left
     return (nearby_objects_main, nearby_objects_left, nearby_objects_right)
+
