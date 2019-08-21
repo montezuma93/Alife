@@ -368,15 +368,15 @@ class Creature(Thing):
             else:
                 if any("3"  in nearby_objects[1]) and any("3" in nearby_objects[2]):
                     angle = math.pi
-                    speed = 2
+                    speed = 1
                 # Turn to the right
                 elif any("3" in nearby_objects[1]) and not any("3" in nearby_objects[2]):
-                    angle = 0.1
-                    speed = 2
+                    angle = 1
+                    speed = 1
                 # Turn to the left
                 elif not any("3"  in nearby_objects[1]) and any("3"  in nearby_objects[2]):
-                    angle = -0.1
-                    speed = 2
+                    angle = -1
+                    speed = 1
                 else:
                     angle = 0.01
                     speed = 2

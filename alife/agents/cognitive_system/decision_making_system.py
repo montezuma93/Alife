@@ -22,8 +22,8 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         self.alpha = 0.88
         self.k = 0.2
         self.utility_table = {
-            "eat":10,
-            "explore":10
+            "eat":int(decision_making_system_args[3]),
+            "explore":int(decision_making_system_args[4])
         }
         self.weightning_table = {
             "eat":{
@@ -43,19 +43,19 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
     # Observation = [Proposition,...], [...]
     def make_decision(self, observations, available_sentences):
         # Utility eat = Eat Non Toxic - Eat toxic , needs to be greater 1 by design
-        if self.evidence_interpretation.name == EvidenceInterpretation.evidence.name:
+        if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
             self.adjust_weightning_table_for_evidence(observations, available_sentences)
             for key, value in self.weightning_table.items():
                 total_evidence = sum(value.values())
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
-        elif self.evidence_interpretation.name == EvidenceInterpretation.probability.name:
+        elif self.evidence_interpretation == EvidenceInterpretation.probability.value:
             self.adjust_weightning_table_for_probability(observations, available_sentences)
             for key, value in self.weightning_table.items():
                 total_evidence = sum(value.values())
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
-        elif self.evidence_interpretation.name == EvidenceInterpretation.ranking.name:
+        elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
             self.adjust_weightning_table_for_ranking(observations, available_sentences)
             for key, value in self.weightning_table.items():
                 for key2, value2 in value.items():
@@ -247,19 +247,6 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                 # For any vlaue where ß is true, phi is false, so B does not entail phi
                 return False
         return True
-
-
-    # Heighest value should be 1- epsilon
-    def normalize_sentences(self, sentences_to_normalize):
-        sentences = []
-        if len(sentences_to_normalize) > 0:
-            max_value = max([sentence.evidence for sentence in sentences_to_normalize])
-            dividing_factor = max_value / (1-self.epsilon)
-            for sentence in sentences_to_normalize:
-                normalized_sentence = copy.copy(sentence)
-                normalized_sentence.evidence = sentence.evidence / dividing_factor
-                sentences.append(normalized_sentence)
-        return sentences
 
     def update_policy(self, reward, next_observation, next_available_sentences):
         # No need to update policy for that kind of decision making
