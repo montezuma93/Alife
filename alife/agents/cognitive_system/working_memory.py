@@ -8,7 +8,7 @@ class WorkingMemoryWithEvidence:
 
     def __init__(self, working_memory_system_args):
         #Between 1 and 100
-        self.percentage_amount_for_retrieving = 10
+        self.percentage_amount_for_retrieving = 100
         self.evidence_interpretation = working_memory_system_args[0]
 
     def set_percentage_amount_for_retrieving(self, percentage_amount_for_retrieving):

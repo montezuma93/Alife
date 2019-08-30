@@ -5,6 +5,7 @@ import random
 import numpy as np
 from functools import reduce
 from prettytable import PrettyTable
+import csv
 
 from graphics import *
 from objects import *
@@ -102,7 +103,7 @@ def create_random_txt_for_map():
             '''If no possible tile was found, start again, otherwise choose a tile'''
             if len(intersected_list) > 0:
                 if ' ' in intersected_list:
-                    intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' '])
+                    intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
                 MAP[row, column] = random.choice(intersected_list)
             else:
                 need_restart = True
@@ -218,6 +219,12 @@ class World:
         f.write(x.get_string())
         f.write("\r\n")
         f.close()
+        
+        header = ["AgentID", "Operation", "Result"]
+        csv_file = open("agent.csv", "w")
+        writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
+        writer.writeheader()
+        csv_file.close()
 
         ## MAIN LOOP ##
         sel_obj = None 
@@ -439,7 +446,8 @@ class World:
             cfg_objects = config_file['objects']
             for growth_rate in cfg_world['growth_rate']:
                 cfg_world['growth_rate'][growth_rate] = 0
-            cfg_objects['toxic_damage'] = random.uniform(10, 50)
+            cfg_objects['toxic_damage'] = random.uniform(10, 20)
+            cfg_objects['damage_per_step'] = random.uniform(0.1, 1)
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)
         with open(filename) as file:

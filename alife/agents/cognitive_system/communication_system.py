@@ -4,14 +4,20 @@ import copy
 
 class CommunicationSystem:
 
-    def __init__(self, belief_revision_system):
+    def __init__(self, belief_revision_system, commuication_system_args):
         self.belief_revision_system = belief_revision_system
-        self.evidence_factor_for_communication_sentences = 0.5
-        self.percentage_of_sentences_to_be_used = 50
+        self.able_to_communicate = commuication_system_args[0]
+        if self.able_to_communicate:
+            self.percentage_of_sentences_to_be_used = int(commuication_system_args[1])
+            self.evidence_interpretation = commuication_system_args[2]
 
 
     def filter_sentences(self, other_agents_available_knowledge):
-        other_agents_available_knowledge.sort(key=lambda sentence: sentence.evidence, reverse=True)
+        if self.evidence_interpretation == EvidenceInterpretation.ranking.value:
+            other_agents_available_knowledge.sort(key=lambda sentence: sentence.evidence, reverse=False)
+        else:
+            other_agents_available_knowledge.sort(key=lambda sentence: sentence.evidence, reverse=True)
+
         # Just take first n sentences
         total_amount_of_sentences = len(other_agents_available_knowledge)
         amount_of_sentences_to_return = math.ceil(total_amount_of_sentences /100 * self.percentage_of_sentences_to_be_used)
@@ -19,7 +25,7 @@ class CommunicationSystem:
         for sentence in other_agents_available_knowledge:
             if len(sentences_from_communcication) < amount_of_sentences_to_return or sentences_from_communcication[-1].evidence == sentence.evidence:
                 sentence_from_communcication = copy.deepcopy(sentence)
-                sentence_from_communcication.evidence = sentence.evidence * self.evidence_factor_for_communication_sentences
+                sentence_from_communcication.evidence = sentence.evidence
                 sentences_from_communcication.append(copy.deepcopy(sentence))
             else:
                 break

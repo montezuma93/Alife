@@ -8,7 +8,7 @@ class CommunicationSystemTest(TestCase):
     def test_save_sentences(self):
 
         self.belief_revision_system = FormalBeliefRevision([True])
-        self.communication_system = CommunicationSystem(self.belief_revision_system)
+        self.communication_system = CommunicationSystem(self.belief_revision_system, [True, 10, EvidenceInterpretation.evidence.value])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
 

@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import numpy as np
+from random import choices
 
 from enum import Enum
 from utils import *
@@ -56,12 +57,14 @@ DIVIDE_LIMIT = cfg['divide_limit']     # Divide when at this proportion of energ
 INIT_ENERGY = cfg['init_energy']       # How much of its max energy is a creature born with
 BITE_RATIO = cfg['bite_ratio']         #
 MIN_ATTACK_ANGLE = pi                  # Minimum attack angle 
+DAMAGE_PER_STEP = cfg['damage_per_step'] # Damage per time step
 
 def burn(angle,speed,size):
     '''
         How much energy is burned for a bug of this size, moving at this speed, changing angle by thus much.
     '''
-    return max(1.,abs(speed)+5.*abs(angle))**2 * (size / 1000.0)
+    return DAMAGE_PER_STEP
+    # return max(1.,abs(speed)+5.*abs(angle))**2 * (size / 1000.0)
 
 
 
@@ -136,23 +139,30 @@ class Thing(pygame.sprite.DirtySprite):
         if ((self.ID == ID_PLANT or self.ID == ID_PLANT_ORANGE or self.ID == ID_PLANT_PURPLE or self.ID == ID_PLANT_BLUE)
          and creature.ID >= ID_ANIMAL) :
             # The creature can eat me (one bite at a time, relative to its own size)
-            bite = random.rand() * creature.energy_limit * BITE_RATIO
-            self.energy = self.energy - bite
-            # Creature can eat me and will get energy
-            plants_toxicity = get_plant_toxicity(self, world)
-            if plants_toxicity == "X": 
-                creature.energy = creature.energy - TOXIC_DAMAGE
-            else: 
-                creature.energy = creature.energy + bite
+            # Does it eat me?
+            plant_location_x, plant_location_y = self.pos
+            creature_location_x, creature_location_y = creature.pos
+            creature.unitv
+            vector_between_beeing_and_plant = (plant_location_x- creature_location_x, plant_location_y- creature_location_y)
+            angle = angle_between([vector_between_beeing_and_plant[0], vector_between_beeing_and_plant[1]], [creature.unitv[0], creature.unitv[1]])
+            if angle > -0.75 and angle < 0.75:
+                bite = random.rand() * creature.energy_limit * BITE_RATIO
+                self.energy = self.energy - bite
+                # Creature can eat me and will get energy
+                plants_toxicity = get_plant_toxicity(self, world)
+                if plants_toxicity == "X": 
+                    creature.energy = creature.energy - TOXIC_DAMAGE
+                else: 
+                    creature.energy = creature.energy + bite
         elif self.ID == ID_ROCK:
             # I am a rock
             creature.energy = creature.energy - creature.speed * BOUNCE_DAMAGE         # Ouch!
 
         # Bump !
         # Does it need to be moved?
-        self.pos = self.pos + (creature.unitv * creature.speed)
+        # self.pos = self.pos + (creature.unitv * creature.speed)
 
-        slide_apart(creature,self)
+        #slide_apart(creature,self)
         self.is_colliding = True
 
     def kill(self): # necessary?
@@ -287,7 +297,7 @@ class Creature(Thing):
         self.observation = zeros(N_INPUTS, dtype=float)
 
         # Check collisions with terrain, and other objects
-        self.observation[IDX_COLIDE],collision_obj,terrain_centre = world.collision_to_vision(self.pos,self.radius*4.,self,s_collision_radius=self.radius)
+        self.observation[IDX_COLIDE],collision_obj,terrain_centre = world.collision_to_vision(self.pos,self.radius*2,self,s_collision_radius=self.radius)
         self.observation[IDX_PROBE1],o1,t1 = world.collision_to_vision(self.pos+self.pa1,self.radius*3.,self)
         self.observation[IDX_PROBE2],o2,t2 = world.collision_to_vision(self.pos+self.pa2,self.radius*3.,self)
 
@@ -333,6 +343,7 @@ class Creature(Thing):
         self.wrap(world)
 
     def map_chosen_action_to_angle_and_speed(self, world, action, nearby_objects):
+
         # Nearby object helps to find out the angle to choose
         # nearby_objects[0] = Main | nearby_objects[1] = Left | nearby_objects[2] = Right 
 
@@ -344,42 +355,51 @@ class Creature(Thing):
         speed = 0
         # Calculate angle to the plant
         if action.intension.name == Action.eat.name:
-            if any("3" in nearby_objects[1]) and any("3" in nearby_objects[2]):
-                angle = 0
-                speed = 2
+            if (any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]])):
+                if(any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[0]])):
+                    angle = 0
+                    speed = 0.1
+                else:
+                    angle = 0
+                    speed = 2
             # Turn to the left
-            elif any("3" in nearby_objects[1]) and not any("3" in nearby_objects[2]):
+            elif any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = -0.1
-                speed = 0.1
+                speed = 0.5
             # Turn to the right
-            elif not any("3" in nearby_objects[1]) and any("3" in nearby_objects[2]):
+            elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = 0.1
-                speed = 0.1
+                speed = 0.5
             else:
                 angle = 0
                 speed = 1
         # TODO Prefere Places where bug not have been before, will be done after adding Spatial Knowledge
         elif action.intension.name == Action.explore.name:
-            if action.location is not None:
-                location_wanted_x,location_wanted_y  = world.grid2pos(action.location)
-                vector_wanted = (location_wanted_x- self.pos[0], location_wanted_y- self.pos[1])
-                angle = angle_between([location_wanted_x, location_wanted_y], [self.pos[0], self.pos[1]])
+            if any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
+                angle = math.pi
+                speed = 1
+            # Turn to the right
+            elif any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
+                angle = 1
+                speed = 1
+            # Turn to the left
+            elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
+                angle = -1
                 speed = 1
             else:
-                if any("3"  in nearby_objects[1]) and any("3" in nearby_objects[2]):
-                    angle = math.pi
-                    speed = 1
-                # Turn to the right
-                elif any("3" in nearby_objects[1]) and not any("3" in nearby_objects[2]):
-                    angle = 1
-                    speed = 1
-                # Turn to the left
-                elif not any("3"  in nearby_objects[1]) and any("3"  in nearby_objects[2]):
-                    angle = -1
-                    speed = 1
+                if action.location is not None:
+                    go_to = choices(population=["Random", "Location"], weights=[0.9, 0.1], k=1)
+                    if go_to[0] == "Location":
+                        location_wanted_x,location_wanted_y  = world.grid2pos(action.location)
+                        vector_wanted = (location_wanted_x- self.pos[0], location_wanted_y- self.pos[1])
+                        angle = angle_between([location_wanted_x, location_wanted_y], [self.pos[0], self.pos[1]])
+                        speed = 1
+                    else:
+                        angle = 0.01
+                        speed = 1
                 else:
                     angle = 0.01
-                    speed = 2
+                    speed = 1
                 # The moment after revising and updating policies
         else:
             angle = 0
@@ -484,13 +504,13 @@ def get_nearby_objects(agent, world):
                 # Just consider rock and tree trunks
                 if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK or things[i].ID in PLANT_IDS:
                     # ... how much overlap with the this thing?
-                    olap = overlap(agent.pos,agent.radius*2,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos,agent.radius*1.2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_main.append(things[i].ID) if things[i].ID not in nearby_objects_main else nearby_objects_main
                     olap = overlap(agent.pos+agent.pa1,agent.radius*1.2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_right.append(things[i].ID) if things[i].ID not in nearby_objects_right else nearby_objects_right
-                    olap = overlap(agent.pos+agent.pa2,agent.radius*2,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos+agent.pa2,agent.radius*1.2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_left.append(things[i].ID) if things[i].ID not in nearby_objects_left else nearby_objects_left
     return (nearby_objects_main, nearby_objects_left, nearby_objects_right)

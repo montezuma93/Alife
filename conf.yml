@@ -1,26 +1,28 @@
 bugs:
   1: alife.agents.evolution/SimpleEvolver/{'H':10}
   2: alife.agents.evolution/SimpleEvolver/{'H':-10}
-  3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'SinglePropositionSystem',
-    'BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading',
+  3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'MultiplePropositionSystem',
+    'BeliefRevisionSystem':'ConditionalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithEvidence',
     'DecisionMakingSystem':'HumanLikeDecisionMakingUnderUncertaintySystem', 'MentalMap':'True',
-    'ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['PROBABILITY'],
-    'DecisionMakingSystem_Args':[1, 0.5, 'PROBABILITY', 10, 10]}
+    'ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'], 'WorkingMemorySystem_Args':['RANKING'],
+    'DecisionMakingSystem_Args':[1, 0.1, 'RANKING', 100, 10, 'False'], 'CommunicationSystem_Args':['True',
+    10, 'RANKING'],'ClosedWorldAssumption':'True'}
 objects:
   bite_ratio: 0.05
   bounce_damage: 0
+  damage_per_step: 0.5241891276986058
   default_mass_bug: 300
   default_mass_thing: 500
   divide_limit: 2.0
   flight_boost: 5.0
   flight_speed: 5.0
   init_energy: 1.0
-  terrain_damage: 1.5
+  terrain_damage: 0
   touch_threshold: 0.9
-  toxic_damage: 23.331321730777294
+  toxic_damage: 12.370054738515353
 world:
   factor: 2
-  fps: 1
+  fps: 10
   growth_rate:
     ID_3: 0
     ID_31: 0

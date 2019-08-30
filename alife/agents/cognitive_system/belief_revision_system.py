@@ -63,7 +63,7 @@ class FormalBeliefRevision(BeliefRevisionSystem):
                 propositions_in_belief_base = propositions_in_belief_base + stored_sentence.propositions[0][1].value
                 # Sentence already in belief base, now increase its evidence
                 if propositions_in_new_sentence == propositions_in_belief_base:
-                    stored_sentence.evidence = stored_sentence.evidence + new_sentence.evidence
+                    stored_sentence.evidence = max(stored_sentence.evidence + 1, new_sentence.evidence)
                     # Add all sentences to revised belief base, as sentence is already in belief base
                     for stored_sentence in belief_base:
                         revised_belief_base.append(stored_sentence)
@@ -286,18 +286,20 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
 
     def create_possible_worlds(self):
         self.variables = get_variable_names_for_propositions()
+        self.variables.append("!D")
         self.reward_variables = get_variable_names_for_reward_propositions()
         possible_worlds = {}
         for color in get_variable_names_for_color_propositions():
             possible_worlds[color] = {}
             all_combinations = [list(i) for i in itertools.product([0, 1], repeat=len(self.variables + self.reward_variables))]
-            for combination in all_combinations:
+            filtered_combiation = [combination for combination in all_combinations if combination[0]!= 1 or combination[3]!= 0]
+            for combination in filtered_combiation:
                 combination_str = [str(i) for i in combination]
                 combination_key = "".join(combination_str)
                 possible_worlds[color][combination_key] = 0
         return possible_worlds
     
-    def revise_belief_base(self, new_sentences: Sentence):
+    def revise_belief_base(self, new_sentences: Sentence, stored_stences = None):
         for sentence in new_sentences:
             kappa_values_and_color = self.calculate_kappa_values(sentence)
             kappa_values = kappa_values_and_color[0]
@@ -306,11 +308,13 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             kappa_zero = self.calculate_kappa_zero(y_values[1], kappa_values[0][1], kappa_values[2][1])
             self.update_kappa_values(kappa_zero, y_values[0], y_values[1], kappa_values[0][0], kappa_values[1][0], kappa_values[2][0], color)
         sentences = self.map_possible_worlds_to_belief_base()
+
         return sentences
 
 
     def calculate_kappa_values(self, new_sentence):
         all_variables = get_variable_names_for_propositions()
+        all_variables.append("!D")
         variables = []
         color = ""
         for proposition in new_sentence.propositions[0][0]:
@@ -329,6 +333,7 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 if not variables.__contains__(proposition) and not variables.__contains__("!" + proposition):
                     variables.append("!"+proposition )
         
+        
         # Sorting
         remember_variables = variables
         variables = []
@@ -338,14 +343,21 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
         for old_variable in remember_variables:
             index = variables.index(old_variable.replace("!", ""))
             variables[index] = old_variable
-        
         # Add placeholder * where the literl doesn' matter
         replaced_variables = []
-        for variable in all_variables:
-            if variable not in variables:
-                replaced_variables.append("*")
-            else:
-                replaced_variables.append(variable)
+        if self.closed_world_assumption:
+            for variable in all_variables:
+                if variable not in variables:
+                    replaced_variables.append("!")
+                else:
+                    replaced_variables.append(variable)
+        else:
+            for variable in all_variables:
+                if variable not in variables:
+                    replaced_variables.append("*")
+                else:
+                    replaced_variables.append(variable)
+
         variable_code = ""
         for variable in replaced_variables:
             if "!" in variable:
@@ -354,6 +366,12 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 variable_code = variable_code +"*"
             else:
                 variable_code = variable_code +"1"
+
+        if self.closed_world_assumption:
+            if variable_code[:1] == '1' and variable_code[-1] == '0':
+                variable_code = variable_code[:-1] + '1'
+
+        
         conditional_variable_code = "1" if new_sentence.propositions[0][1].value == "X" else  "0"
         verifying_worlds = []
         falsifying_worlds = []
@@ -369,10 +387,11 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 new_variable_code[index] = str(value[i])
             all_variable_codes.append("".join(new_variable_code))
 
-        for variable_code in all_variable_codes:
+        filtered_combiation_all_variable_codes = [combination for combination in all_variable_codes if combination[:1] != '1' or combination[-1]!= '0']
+        for variable_code in filtered_combiation_all_variable_codes:
             verifying_worlds.append((variable_code + conditional_variable_code, self.possible_worlds[color][variable_code + conditional_variable_code]))
 
-        for variable_code in all_variable_codes:
+        for variable_code in filtered_combiation_all_variable_codes:
             negated_conditional_variable_code = "0" if conditional_variable_code == "1" else "1"
             falsifying_worlds.append((variable_code + negated_conditional_variable_code, self.possible_worlds[color][variable_code + negated_conditional_variable_code]))
 
@@ -456,6 +475,7 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
             "B": ColorBlue()
         }
         variables = get_variable_names_for_propositions()
+        variables.append("!D")
         reward_variables = get_variable_names_for_reward_propositions()
         max_amount_of_propositions = len(variables)
         sentences = []
@@ -465,10 +485,11 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                 for index, proposition in enumerate(propositions):
                     if index < max_amount_of_propositions:
                         if variables[index] == "D":
+                            if proposition == "1":
+                                sentence_propositions.append(key_to_proposition_mapping.get("D"))
+                        elif variables[index] == "!D":
                             if proposition == "0":
                                 sentence_propositions.append(key_to_proposition_mapping.get("!D"))
-                            else:
-                                sentence_propositions.append(key_to_proposition_mapping.get("D"))
                         else:
                             if proposition == "1":
                                 sentence_propositions.append(key_to_proposition_mapping.get(variables[index]))

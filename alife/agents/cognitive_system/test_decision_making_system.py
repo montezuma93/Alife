@@ -10,7 +10,7 @@ class DecisionMakingSystemTest(TestCase):
 ####################################### HUMAN LIKE DECISION MAKING UNDER UNCERTAINTY SYSTEM  ##############################
 
     def test_make_decision_decision_evidence(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0, EvidenceInterpretation.evidence])
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0, EvidenceInterpretation.evidence.value, False, 10, 10])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 5)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 2)
@@ -22,7 +22,7 @@ class DecisionMakingSystemTest(TestCase):
         self.assertEqual(Action.explore, action)
 
     def test_make_decision_decision_probability(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  0, EvidenceInterpretation.probability])
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  0, EvidenceInterpretation.probability.value, False, 10, 10])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 0.1)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
@@ -35,7 +35,7 @@ class DecisionMakingSystemTest(TestCase):
 
 
     def test_make_decision_decision_ranking(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0,  EvidenceInterpretation.ranking])
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0,  EvidenceInterpretation.ranking.value, False, 10, 10])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.nontoxic)], 0)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 2)
@@ -52,7 +52,7 @@ class DecisionMakingSystemTest(TestCase):
 
 
     def test_make_decision_decision_probability(self):
-        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  1, EvidenceInterpretation.probability])
+        self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1,  1, EvidenceInterpretation.probability.value, False, 10, 10])
         self.decision_making_system.utility_table = {
             "eat":20,
             "explore":5

@@ -162,7 +162,7 @@ class BeliefRevisionTest(TestCase):
 
         revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], old_belief_base)
         self.assertEqual(2, len(revised_belief_base))
-        self.assertEqual(3, revised_belief_base[1].evidence)
+        self.assertEqual(2, revised_belief_base[1].evidence)
     
     def test_formal_belief_revision_without_closed_world_assumption(self):
         self.belief_revision_system = FormalBeliefRevision([False])
@@ -396,11 +396,11 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.28, another_revised_belief_base[3].evidence, 2)
 
  ############################### CONDITIONAL BELIEF REVISION ##############################################
-    
+
     def test_create_possible_worlds_while_init(self):
         self.belief_revision_system = ConditionalBeliefRevision([False])
         self.assertEqual(4, len(self.belief_revision_system.possible_worlds))
-        self.assertEqual(16, len(self.belief_revision_system.possible_worlds["G"]))
+        self.assertEqual(24, len(self.belief_revision_system.possible_worlds["G"]))
         
     
 
@@ -431,7 +431,7 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(0, kappa_values[0][0][1])
         self.assertEqual(0, kappa_values[0][1][1])
         self.assertEqual(0, kappa_values[0][2][1])
-    
+
     def test_conditional_belief_revision_create_conditionals_including_negation(self):
         self.belief_revision_system = ConditionalBeliefRevision([False])
 
@@ -464,7 +464,6 @@ class BeliefRevisionTest(TestCase):
         self.belief_revision_system = ConditionalBeliefRevision([False])
         self.assertEqual((2, -2), self.belief_revision_system.solve_gamma_values(3,1))
 
- 
 
     def test_first_sentence_revision(self):
         self.belief_revision_system = ConditionalBeliefRevision([False])
@@ -474,10 +473,31 @@ class BeliefRevisionTest(TestCase):
         self.belief_revision_system.revise_belief_base(new_sentences)
         
 
-        new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
+        new_sentences = [Sentence([([ColorGreen(), NightProposition()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)
+    
+    def test_first_sentence_revision_negative_day(self):
+        self.belief_revision_system = ConditionalBeliefRevision([False])    
+
+        new_sentences = [Sentence([([ColorGreen()], Reward.nontoxic)], 1)]
 
         self.belief_revision_system.revise_belief_base(new_sentences)
 
+    
+    def test_first_sentence_revision_negative_day(self):
+        self.belief_revision_system = ConditionalBeliefRevision([True])    
+
+        new_sentences = [Sentence([([ColorGreen()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)
+
+    def test_first_sentence_revision_negative_day(self):
+        self.belief_revision_system = ConditionalBeliefRevision([True])    
+
+        new_sentences = [Sentence([([ColorGreen()], Reward.nontoxic)], 1)]
+
+        self.belief_revision_system.revise_belief_base(new_sentences)
 
     def test_first_sentence_revision(self):
         self.belief_revision_system = ConditionalBeliefRevision([False])
@@ -503,6 +523,7 @@ class BeliefRevisionTest(TestCase):
 
         self.belief_revision_system.revise_belief_base(new_sentences)
     
+
     def test_first_sentence_revision_with_closed_world_assumption(self):
         self.belief_revision_system = ConditionalBeliefRevision([False])
 
@@ -514,4 +535,3 @@ class BeliefRevisionTest(TestCase):
         new_sentences = [Sentence([([ColorGreen(), DayProposition()], Reward.nontoxic)], 1)]
 
         self.belief_revision_system.revise_belief_base(new_sentences)
-    

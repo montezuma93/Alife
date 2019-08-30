@@ -14,7 +14,7 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         self.risk_aversion = int(decision_making_system_args[0])
         self.ambiguity_aversion = int(decision_making_system_args[1])
         self.evidence_interpretation = decision_making_system_args[2]
-        self.closed_world_assumption = False
+        self.closed_world_assumption = decision_making_system_args[5]
         
         self.epsilon = 0.1
         self.delta = 0.77
@@ -46,13 +46,13 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
             self.adjust_weightning_table_for_evidence(observations, available_sentences)
             for key, value in self.weightning_table.items():
-                total_evidence = sum(value.values())
+                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
         elif self.evidence_interpretation == EvidenceInterpretation.probability.value:
             self.adjust_weightning_table_for_probability(observations, available_sentences)
             for key, value in self.weightning_table.items():
-                total_evidence = sum(value.values())
+                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
         elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
@@ -61,23 +61,30 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] =  1 / self.weightning_table[key][key2]
             for key, value in self.weightning_table.items():
-                total_evidence = sum(value.values())
+                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
                 for key2, value2 in value.items():
                     self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
-
         # Calculate entropy
         for key, value in self.weightning_table.items():
-            self.weightning_table[key]["entropy"] = (self.weightning_table[key]["true"] * math.log(self.weightning_table[key]["true"]) + self.weightning_table[key]["false"] * math.log(self.weightning_table[key]["false"])) * -1
+            if self.weightning_table[key]["true"] == 0 or self.weightning_table[key]["false"] == 0:
+                self.weightning_table[key]["entropy"] = 0
+            else:
+                self.weightning_table[key]["entropy"] = (self.weightning_table[key]["true"] * math.log(self.weightning_table[key]["true"]) + self.weightning_table[key]["false"] * math.log(self.weightning_table[key]["false"])) * -1
+
         for key in self.solution_table.keys():
             utility = math.pow(self.utility_table[key], self.alpha)
             ambiguity_of_solution = self.weightning_table[key]["entropy"] if key in self.weightning_table else 0
+            
             normalized_ambiguity_of_solution = (1 - math.pow(math.e, (self.k * ambiguity_of_solution * -1)))
             probability = self.weightning_table[key]["true"] if key in self.weightning_table else 1
             counter_probability = self.weightning_table[key]["false"] if key in self.weightning_table else 0
             weightning = ((self.delta + 0.5 - self.risk_aversion) * (1-self.ambiguity_aversion * normalized_ambiguity_of_solution) * math.pow(probability,self.gamma)) / (
                 ((self.delta + 0.5 - self.risk_aversion) * (1-self.ambiguity_aversion * normalized_ambiguity_of_solution) * math.pow(probability,self.gamma)) +  math.pow(counter_probability,self.gamma))
             self.solution_table[key] = utility * weightning
-        return self.solution_to_action_mapping.get(max(self.solution_table.items(), key=operator.itemgetter(1))[0])
+
+        print(self.solution_table)
+        decision_made = self.solution_to_action_mapping.get(max(self.solution_table.items(), key=operator.itemgetter(1))[0])
+        return decision_made
 
     def adjust_weightning_table_for_evidence(self, observations, available_sentences):
         evidence_for_non_toxic= 0

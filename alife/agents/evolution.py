@@ -127,7 +127,7 @@ class CognitiveEnvolver(Agent):
         self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"),
          kwargs.get("WorkingMemorySystem"), kwargs.get("DecisionMakingSystem"), kwargs.get("MentalMap"),
           kwargs.get("ObservationSystem_Args"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("WorkingMemorySystem_Args"),
-           kwargs.get("DecisionMakingSystem_Args"))
+           kwargs.get("DecisionMakingSystem_Args"), kwargs.get("CommunicationSystem_Args"))
         
 
     def act(self, obs, nearby_objects, is_day_time, reward, world, pos, currentHealth, done=False):
@@ -157,7 +157,8 @@ class CognitiveEnvolver(Agent):
         return action
 
     def communicate(self, other_agent):
-        self.cognitive_system.communicate(self, other_agent.brain)
+        if self.cognitive_system.communication_system.able_to_communicate:
+            self.cognitive_system.communicate(self, other_agent.brain)
 
     def _cast_to_reward(self, reward):
         if reward > 0:
