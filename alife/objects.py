@@ -324,12 +324,15 @@ class Creature(Thing):
         reward = self.energy - self._energy              # reward = energy diff from last timestep
         self._energy = self.energy                       # (save the current energy)
         x, y = world.pos2grid(self.pos)
-
-        currentHealth = Health.moreThanHalf
-        if self.energy < self.init_energy/2 and self.energy >= self.init_energy/4:
+        
+        currentHealth = Health.moreThanThreeQuarter
+        if self.energy < self.init_energy/4*3 and self.energy >= self.init_energy/2:
+            currentHealth = Health.moreThanHalf
+        elif self.energy < self.init_energy/2 and self.energy >= self.init_energy/4:
             currentHealth = Health.lessThanHalf
         elif self.energy < self.init_energy/4:
             currentHealth = Health.lessThanQuarter
+        print(currentHealth)
         action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward, world, self.pos, currentHealth) # call upon the agent to act
         if self.selected is not None:
             action = self.selected

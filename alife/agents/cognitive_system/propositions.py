@@ -133,6 +133,7 @@ class Reward(Enum):
     none="~"
 
 class Health(Enum):
+    moreThanThreeQuarter =">75"
     moreThanHalf= ">=50"
     lessThanHalf= "<50"
     lessThanQuarter= "<25"

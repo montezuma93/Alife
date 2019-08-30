@@ -14,17 +14,33 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         self.risk_aversion = int(decision_making_system_args[0])
         self.ambiguity_aversion = int(decision_making_system_args[1])
         self.evidence_interpretation = decision_making_system_args[2]
-        self.closed_world_assumption = decision_making_system_args[5]
-        
+        self.closed_world_assumption = decision_making_system_args[3]
+
+        self.use_recent_health = decision_making_system_args[4] 
+
         self.epsilon = 0.1
         self.delta = 0.77
         self.gamma = 0.44
         self.alpha = 0.88
         self.k = 0.2
-        self.utility_table = {
-            "eat":int(decision_making_system_args[3]),
-            "explore":int(decision_making_system_args[4])
-        }
+
+        if self.use_recent_health:
+            self.utility_table = {
+                "eat->75":int(decision_making_system_args[5]),
+                "eat->=50":int(decision_making_system_args[6]),
+                "eat-<50":int(decision_making_system_args[7]),
+                "eat-<25":int(decision_making_system_args[8]),
+                "explore->75":int(decision_making_system_args[9]),
+                "explore->=50":int(decision_making_system_args[10]),
+                "explore-<50":int(decision_making_system_args[11]),
+                "explore-<25":int(decision_making_system_args[12])
+            }
+        else:
+            self.utility_table = {
+                "eat":int(decision_making_system_args[5]),
+                "explore":int(decision_making_system_args[6])
+            }
+
         self.weightning_table = {
             "eat":{
                 "true":0,
@@ -41,7 +57,7 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         }
 
     # Observation = [Proposition,...], [...]
-    def make_decision(self, observations, available_sentences):
+    def make_decision(self, observations, available_sentences, recent_health):
         # Utility eat = Eat Non Toxic - Eat toxic , needs to be greater 1 by design
         if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
             self.adjust_weightning_table_for_evidence(observations, available_sentences)
@@ -72,7 +88,11 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                 self.weightning_table[key]["entropy"] = (self.weightning_table[key]["true"] * math.log(self.weightning_table[key]["true"]) + self.weightning_table[key]["false"] * math.log(self.weightning_table[key]["false"])) * -1
 
         for key in self.solution_table.keys():
-            utility = math.pow(self.utility_table[key], self.alpha)
+            utility = 0
+            if self.use_recent_health:
+                utility = math.pow(self.utility_table[key + "-" + recent_health.value], self.alpha)
+            else:
+                utility = math.pow(self.utility_table[key], self.alpha)
             ambiguity_of_solution = self.weightning_table[key]["entropy"] if key in self.weightning_table else 0
             
             normalized_ambiguity_of_solution = (1 - math.pow(math.e, (self.k * ambiguity_of_solution * -1)))
@@ -255,27 +275,28 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                 return False
         return True
 
-    def update_policy(self, reward, next_observation, next_available_sentences):
+    def update_policy(self, reward, next_observation, next_available_sentences, current_health):
         # No need to update policy for that kind of decision making
         pass
 
 class QLearningDecisionMakingSystem:
 
-    def __init__(self):
+    def __init__(self, decision_making_system_args):
         self.reward_table = {
-            Reward.toxic: -10,
-            Reward.nontoxic: 10
+            Reward.toxic: int(decision_making_system_args[1]),
+            Reward.nontoxic: int(decision_making_system_args[2])
         }
-        self.reward_for_exploration = 1
+        self.use_recent_health = decision_making_system_args[0]
+        self.reward_for_exploration = int(decision_making_system_args[3])
         self.learning_rate = 0.1
         self.discount_factor = 0.9
         self.q_table = {}
-        self.exploration_probability = 0
+        self.exploration_probability = float(decision_making_system_args[4])
         self.last_action_chosen = None
         self.last_state_key = None
 
-    def make_decision(self, observations, available_sentences):
-        key = self.create_key(observations, available_sentences)
+    def make_decision(self, observations, available_sentences, recent_health):
+        key = self.create_key(observations, available_sentences, recent_health)
         if key not in self.q_table:
             self.add_state(key)
         
@@ -296,7 +317,7 @@ class QLearningDecisionMakingSystem:
     def add_state(self, key):
         self.q_table[key] = {Action.eat:0, Action.explore:0}
 
-    def create_key(self, observations, available_sentences):
+    def create_key(self, observations, available_sentences, recent_health):
         longest_observation = None
         for observation in observations:
             if longest_observation is None or len(observation.propositions[0][0]) > len(longest_observation.propositions[0][0]):
@@ -314,15 +335,17 @@ class QLearningDecisionMakingSystem:
                 key = key + or_sentence[1].value
                 key = key + ","
         key = key[:-1]
+        if self.use_recent_health:
+           key = key + "|" + recent_health.value 
         return key
 
  
-    def update_policy(self, reward, next_observation, next_available_sentences):
+    def update_policy(self, reward, next_observation, next_available_sentences, recent_health):
         if not self.last_state_key:
-            key = self.create_key(next_observation, next_available_sentences)
+            key = self.create_key(next_observation, next_available_sentences, recent_health)
             self.add_state(key)
         reward = self.reward_table.get(reward) if reward in self.reward_table else self.reward_for_exploration
-        next_state = self.create_key(next_observation, next_available_sentences)
+        next_state = self.create_key(next_observation, next_available_sentences, recent_health)
         maximum_future_reward = self.get_maximum_reward_for_next_sate(next_state)
 
         self.q_table[self.last_state_key][self.last_action_chosen] = ((1-self.learning_rate) * self.q_table[self.last_state_key][self.last_action_chosen] +

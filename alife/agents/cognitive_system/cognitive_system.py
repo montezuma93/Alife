@@ -88,7 +88,7 @@ class Cognitive_System():
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 rows_to_add_to_logger.append([agent.id_num, "Available Knowledge", ",\r\n".join([sentence.__str__() for sentence in available_knowledge])])
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
-                action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge)
+                action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
                 logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s" % 
                 (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
@@ -98,7 +98,7 @@ class Cognitive_System():
                     self.mental_map.remember_good_place(position)
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
-                self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge)
+                self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
                 logging.info("Updated Decision Making Policy")
                 if type(self.decision_making_system) is QLearningDecisionMakingSystem:
                     logging.info("Q Table: \r\n %s" % (self.decision_making_system.q_table))
@@ -112,7 +112,7 @@ class Cognitive_System():
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 rows_to_add_to_logger.append([agent.id_num, "Available Knowledge",  ",\r\n".join([sentence.__str__() for sentence in available_knowledge])])
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
-                action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge)
+                action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
                 logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s:" % 
                 (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
@@ -137,7 +137,7 @@ class Cognitive_System():
         if self.mental_map is not None and action_chosen.name == Action.explore.name:
             logging.info("Mental Map is availaible: %s, with current health: %s, looking for best spot" % (self.mental_map.mental_map, currentHealth.value))
             x,y = world.pos2grid(pos)
-            if currentHealth.name == Health.moreThanHalf.name:
+            if currentHealth.name == Health.moreThanHalf.name or  currentHealth.name == Health.moreThanThreeQuarter.name:
                 possible_locations = []
                 for i in [x-1,x, x+1]:
                     for j in [y-1,y, y+1]:
