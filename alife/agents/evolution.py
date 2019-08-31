@@ -163,7 +163,7 @@ class CognitiveEnvolver(Agent):
     def _cast_to_reward(self, reward):
         if reward > 0:
             return Reward.nontoxic
-        elif reward <= -10:
+        elif reward <= -2:
             return Reward.toxic
         else:
             return Reward.none

@@ -147,12 +147,14 @@ class Thing(pygame.sprite.DirtySprite):
             angle = angle_between([vector_between_beeing_and_plant[0], vector_between_beeing_and_plant[1]], [creature.unitv[0], creature.unitv[1]])
             if angle > -0.75 and angle < 0.75:
                 bite = random.rand() * creature.energy_limit * BITE_RATIO
+                
                 self.energy = self.energy - bite
                 # Creature can eat me and will get energy
                 plants_toxicity = get_plant_toxicity(self, world)
                 if plants_toxicity == "X": 
                     creature.energy = creature.energy - TOXIC_DAMAGE
                 else: 
+                    print(bite)
                     creature.energy = creature.energy + bite
         elif self.ID == ID_ROCK:
             # I am a rock
@@ -297,7 +299,7 @@ class Creature(Thing):
         self.observation = zeros(N_INPUTS, dtype=float)
 
         # Check collisions with terrain, and other objects
-        self.observation[IDX_COLIDE],collision_obj,terrain_centre = world.collision_to_vision(self.pos,self.radius*2,self,s_collision_radius=self.radius)
+        self.observation[IDX_COLIDE],collision_obj,terrain_centre = world.collision_to_vision(self.pos,self.radius*1,self,s_collision_radius=self.radius)
         self.observation[IDX_PROBE1],o1,t1 = world.collision_to_vision(self.pos+self.pa1,self.radius*3.,self)
         self.observation[IDX_PROBE2],o2,t2 = world.collision_to_vision(self.pos+self.pa2,self.radius*3.,self)
 
@@ -324,7 +326,6 @@ class Creature(Thing):
         reward = self.energy - self._energy              # reward = energy diff from last timestep
         self._energy = self.energy                       # (save the current energy)
         x, y = world.pos2grid(self.pos)
-        
         currentHealth = Health.moreThanThreeQuarter
         if self.energy < self.init_energy/4*3 and self.energy >= self.init_energy/2:
             currentHealth = Health.moreThanHalf
@@ -332,7 +333,6 @@ class Creature(Thing):
             currentHealth = Health.lessThanHalf
         elif self.energy < self.init_energy/4:
             currentHealth = Health.lessThanQuarter
-        print(currentHealth)
         action = self.brain.act(self.observation, nearby_objects, world.IS_DAY_TIME, reward, world, self.pos, currentHealth) # call upon the agent to act
         if self.selected is not None:
             action = self.selected
@@ -507,7 +507,7 @@ def get_nearby_objects(agent, world):
                 # Just consider rock and tree trunks
                 if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK or things[i].ID in PLANT_IDS:
                     # ... how much overlap with the this thing?
-                    olap = overlap(agent.pos,agent.radius*1.2,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos,agent.radius*1,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_main.append(things[i].ID) if things[i].ID not in nearby_objects_main else nearby_objects_main
                     olap = overlap(agent.pos+agent.pa1,agent.radius*1.2,things[i].pos,things[i].radius)

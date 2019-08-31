@@ -424,14 +424,14 @@ class World:
     def create_things_and_creatures(self, max_plant_size, agents):
         positions_used_plants = []
         for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
-            for i in range(random.randint(0,9)):
+            for i in range(random.randint(1,19)):
                 random_position = self.random_position(positions_used_plants = positions_used_plants)
                 positions_used_plants.append(random_position)
                 Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
                 #Add rocks and tree trunks
         for thing_type in (ID_ROCK, ID_TREE_TRUNK):
             positions_used_objects = []
-            for i in range(random.randint(0,9)):
+            for i in range(random.randint(10,20)):
                 random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
                 positions_used_objects.append(random_position)
                 Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
@@ -446,8 +446,8 @@ class World:
             cfg_objects = config_file['objects']
             for growth_rate in cfg_world['growth_rate']:
                 cfg_world['growth_rate'][growth_rate] = 0
-            cfg_objects['toxic_damage'] = random.uniform(10, 20)
-            cfg_objects['damage_per_step'] = random.uniform(0.1, 1)
+            cfg_objects['toxic_damage'] = random.uniform(2, 10)
+            cfg_objects['damage_per_step'] = random.uniform(0.01, 0.1)
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)
         with open(filename) as file:

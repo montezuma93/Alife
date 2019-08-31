@@ -4,13 +4,13 @@ bugs:
   3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'OccamsRazorMultiplePropositionSystem',
     'BeliefRevisionSystem':'ConditionalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithEvidence',
     'DecisionMakingSystem':'HumanLikeDecisionMakingUnderUncertaintySystem', 'MentalMap':'True',
-    'ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'], 'WorkingMemorySystem_Args':['RANKING'],
-    'DecisionMakingSystem_Args':[0.1, 0.9, 'RANKING', 'True', 'True', 5, 20, 21, 22,
-    25, 7, 6, 5], 'CommunicationSystem_Args':['True', 10, 'RANKING'],'ClosedWorldAssumption':'True'}
+    'ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'], 'WorkingMemorySystem_Args':['RANKING',
+    10], 'DecisionMakingSystem_Args':[0.1, 0.9, 'RANKING', 'True', 'True', 5, 20,
+    21, 22, 25, 7, 6, 5], 'CommunicationSystem_Args':['True', 10, 'RANKING'],'ClosedWorldAssumption':'True'}
 objects:
   bite_ratio: 0.05
   bounce_damage: 0
-  damage_per_step: 0.30237089461557914
+  damage_per_step: 0.03324724950620794
   default_mass_bug: 300
   default_mass_thing: 500
   divide_limit: 2.0
@@ -19,7 +19,7 @@ objects:
   init_energy: 1.0
   terrain_damage: 0
   touch_threshold: 0.9
-  toxic_damage: 13.27466641195206
+  toxic_damage: 5.629624866356406
 world:
   factor: 2
   fps: 10

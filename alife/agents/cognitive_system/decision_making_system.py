@@ -288,10 +288,10 @@ class QLearningDecisionMakingSystem:
         }
         self.use_recent_health = decision_making_system_args[0]
         self.reward_for_exploration = int(decision_making_system_args[3])
-        self.learning_rate = 0.1
-        self.discount_factor = 0.9
+        self.learning_rate = float(decision_making_system_args[4])
+        self.discount_factor = float(decision_making_system_args[5])
         self.q_table = {}
-        self.exploration_probability = float(decision_making_system_args[4])
+        self.exploration_probability = float(decision_making_system_args[6])
         self.last_action_chosen = None
         self.last_state_key = None
 

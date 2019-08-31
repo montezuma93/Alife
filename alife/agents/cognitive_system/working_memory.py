@@ -8,8 +8,8 @@ class WorkingMemoryWithEvidence:
 
     def __init__(self, working_memory_system_args):
         #Between 1 and 100
-        self.percentage_amount_for_retrieving = 100
         self.evidence_interpretation = working_memory_system_args[0]
+        self.percentage_amount_for_retrieving = working_memory_system_args[1]
 
     def set_percentage_amount_for_retrieving(self, percentage_amount_for_retrieving):
         if percentage_amount_for_retrieving < 1 or percentage_amount_for_retrieving > 100:
@@ -44,8 +44,8 @@ class WorkingMemoryWithActivationSpreading:
         # Percentage of evidence used
         # For probability factor to multiply proability with
         # For ranking penalty for rank
-        self.include_percentage_evidence_value = 10
         self.evidence_interpretation = working_memory_system_args[0]
+        self.include_percentage_evidence_value = working_memory_system_args[1]
 
     def set_include_percentage_evidence_value(self, include_percentage_evidence_value):
         self.include_percentage_evidence_value = include_percentage_evidence_value

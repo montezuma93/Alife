@@ -92,7 +92,7 @@ class DecisionMakingSystemTest(TestCase):
 
 ####################################### Q LEARNING SYSTEM  ##############################
     def test_create_key(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.9])
+        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.1, 0.9, 0.9])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.toxic), ([ColorGreen(), NightProposition()], Reward.toxic)], 0.9)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
@@ -107,7 +107,7 @@ class DecisionMakingSystemTest(TestCase):
         self.assertEqual("O:GRD|B:G-X,G!D-X,RTG-X,DG-!X", key)
 
     def test_create_key_with_recent_health(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([True, -10, 10, 1, 0.9])
+        self.decision_making_system = QLearningDecisionMakingSystem([True, -10, 10, 1, 0.1, 0.9, 0.9])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.toxic), ([ColorGreen(), NightProposition()], Reward.toxic)], 0.9)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
@@ -122,7 +122,7 @@ class DecisionMakingSystemTest(TestCase):
         self.assertEqual("O:GRD|B:G-X,G!D-X,RTG-X,DG-!X|>=50", key)
 
     def test_make_decision_for_given(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0])
+        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.1, 0.9, 0])
         self.decision_making_system.q_table = {
             "O:GRD|B:G-X,G!D-X,RTG-X,DG-!X":{
                 Action.eat:0.1,
@@ -144,7 +144,7 @@ class DecisionMakingSystemTest(TestCase):
     
 
     def test_make_decision_with_empty_q_table_same_following_state(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0])
+        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.1, 0.9, 0])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.toxic), ([ColorGreen(), NightProposition()], Reward.toxic)], 0.9)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
@@ -164,7 +164,7 @@ class DecisionMakingSystemTest(TestCase):
         self.assertEqual(1, max(self.decision_making_system.q_table["O:GRD|B:G-X,G!D-X,RTG-X,DG-!X"].items(), key=lambda x: x[1])[1])
 
     def test_make_decision_with_empty_q_table_same_following_state_one_more(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0])
+        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.1, 0.9, 0])
 
         sentence_1 = Sentence([([ColorGreen()], Reward.toxic), ([ColorGreen(), NightProposition()], Reward.toxic)], 0.9)
         sentence_2 = Sentence([([NextToRock(), NextToTreeTrunk(), ColorGreen()], Reward.toxic)], 0.2)
@@ -190,7 +190,7 @@ class DecisionMakingSystemTest(TestCase):
         self.assertEqual(0, max(self.decision_making_system.q_table["O:GD|B:G-X,G!D-X,RTG-X,DG-!X"].items(), key=lambda x: x[1])[1])
 
     def test_make_decision_with_empty_q_table_without_knowledge(self):
-        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0])
+        self.decision_making_system = QLearningDecisionMakingSystem([False, -10, 10, 1, 0.1, 0.9, 0])
 
         observations = [Sentence([([ColorGreen(), NextToRock(), DayProposition()], Reward.none)], 0.1),
         Sentence([([ColorGreen(), NextToRock()], Reward.none)], 0.1),

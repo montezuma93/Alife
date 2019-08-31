@@ -9,8 +9,7 @@ class WorkingMemoryTest(TestCase):
 ########################### WORKING MEMORY ###########################################
 
     def test_set_percentage(self):
-        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value])
-        self.working_memory.percentage_amount_for_retrieving = 100
+        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value, 100])
 
         self.working_memory.set_percentage_amount_for_retrieving(0)
         self.assertEqual(100, self.working_memory.percentage_amount_for_retrieving)
@@ -21,8 +20,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_sentences_all(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value])
-        self.working_memory.percentage_amount_for_retrieving = 100
+        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value, 100])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -36,8 +34,8 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_sentences_some(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value])
-        self.working_memory.set_percentage_amount_for_retrieving(50)
+        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value, 50])
+
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_3 = Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 2)
@@ -51,8 +49,8 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_sentences_some_including_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value])
-        self.working_memory.set_percentage_amount_for_retrieving(10)
+        self.working_memory = WorkingMemoryWithEvidence([EvidenceInterpretation.evidence.value, 10])
+
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_3 = Sentence([([NextToRock(), NightProposition(), ColorGreen()], Reward.nontoxic)], 2)
@@ -70,7 +68,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_calculate_sentences_with_activation_spreading_with_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value])
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value, 100])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 3)
@@ -93,7 +91,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_add_calculated_base_activation_activation_spreading(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value])
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value, 100])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_1.usages = [1]
@@ -113,7 +111,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value])
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value, 50])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_1.usages = [1]
@@ -141,8 +139,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_evidence(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value])
-        self.working_memory.set_include_percentage_evidence_value(75)
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.evidence.value, 75])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 3)
         sentence_1.usages = [1]
@@ -171,8 +168,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_probability(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.probability.value])
-        self.working_memory.set_include_percentage_evidence_value(10)
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.probability.value, 10])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 0.1)
         sentence_1.usages = [1]
@@ -196,8 +192,7 @@ class WorkingMemoryTest(TestCase):
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_ranking(self):
         self.long_term_memory = LongTermMemory()
-        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.ranking.value])
-        self.working_memory.set_include_percentage_evidence_value(10)
+        self.working_memory = WorkingMemoryWithActivationSpreading([EvidenceInterpretation.ranking.value, 10])
 
         sentence_1 = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 0)
         sentence_2 = Sentence([([NextToRock(), DayProposition(), ColorGreen()], Reward.toxic)], 1)
