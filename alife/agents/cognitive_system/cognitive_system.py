@@ -81,14 +81,19 @@ class Cognitive_System():
             (agent.id_num, color_proposition.name if color_proposition is not None else "None", ",".join([proposition.name for proposition in propositions]), reward.name))
             generated_propositions = self.observation_to_proposition_system.observation_to_proposition(color_proposition, propositions, reward)
             logging.info("Generated Sentences:\r\n %s" % ( ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions])))
-            rows_to_add_to_logger.append([str(agent.id_num), "Observation", ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions])])
+            rows_to_add_to_logger.append([str(agent.id_num), "Observation", "# ".join([generated_proposition.__str__() for generated_proposition in generated_propositions])])
+            rows_to_add_to_logger.append([agent.id_num, "Current Health", currentHealth])
             if reward == Reward.none:
                 logging.info("Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
-                rows_to_add_to_logger.append([agent.id_num, "Belief", ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences]))])
+                rows_to_add_to_logger.append([agent.id_num, "Belief", ( "# ".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences]))])
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
-                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge", ",\r\n".join([sentence.__str__() for sentence in available_knowledge])])
+                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge", "# ".join([sentence.__str__() for sentence in available_knowledge])])
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
+                if type(self.decision_making_system) is HumanLikeDecisionMakingUnderUncertaintySystem:
+                     rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.solution_table])
+                elif type(self.decision_making_system) is QLearningDecisionMakingSystem:
+                    rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.q_table])
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
                 logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s" % 
                 (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
@@ -100,19 +105,21 @@ class Cognitive_System():
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
                 logging.info("Updated Decision Making Policy")
-                if type(self.decision_making_system) is QLearningDecisionMakingSystem:
-                    logging.info("Q Table: \r\n %s" % (self.decision_making_system.q_table))
                 logging.info("Sentences to revise belief base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in generated_propositions])))
                 revised_knowledge = self.belief_revision_system.revise_belief_base(generated_propositions, self.long_term_memory.stored_sentences)
                 self.long_term_memory.update(revised_knowledge)
                 logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
                 logging.info("Belief was revised, Belief Base was updated, Decision Making Policy was updated")
-                rows_to_add_to_logger.append([agent.id_num, "Belief", ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])])
+                rows_to_add_to_logger.append([agent.id_num, "Belief", "# ".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])])
                 # TODO What to do here? Eat or Not eat again? Does an decision need to made?
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
-                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge",  ",\r\n".join([sentence.__str__() for sentence in available_knowledge])])
+                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge",  "# ".join([sentence.__str__() for sentence in available_knowledge])])
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
+                if type(self.decision_making_system) is HumanLikeDecisionMakingUnderUncertaintySystem:
+                    rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.solution_table])
+                elif type(self.decision_making_system) is QLearningDecisionMakingSystem:
+                    rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.q_table])
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
                 logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s:" % 
                 (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
@@ -125,12 +132,10 @@ class Cognitive_System():
         # Explore if explore
         # Where to explore, depends on params as well as mental map
         if len(rows_to_add_to_logger) > 0:
-            with open('agent.csv', 'a') as csvFile:
+            with open('agent.csv', 'a', newline='') as csvFile:
                 writer = csv.writer(csvFile, delimiter =";")
                 writer.writerows(rows_to_add_to_logger)
             csvFile.close()
-
-        
 
         complete_action = None
 

@@ -207,9 +207,10 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
         # The value for that entry will be the amount of observations for that key. 
         # If probability for that Propositions was 1/4, the value will be increased by 0.25
         self.observed_data = {}
-        self.pseudo_sample_size = 10
+
         self.closed_world_assumption = belief_revision_system_args[0]
         self.uses_occams_razor_principle = belief_revision_system_args[1]
+        self.pseudo_sample_size = int(belief_revision_system_args[2])
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption

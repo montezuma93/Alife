@@ -251,7 +251,7 @@ class BeliefRevisionTest(TestCase):
     ############################### PROBABILITY BELIEF REVISION ##############################################
 
     def test_probability_belief_revision_without_closed_world_assumption_first_new_sentence(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, False])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, False, 10])
 
         sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
         old_belief_base = []
@@ -262,7 +262,7 @@ class BeliefRevisionTest(TestCase):
     
 
     def test_probability_belief_revision_closed_world_assumption_and_not_uses_occams_razor_first_new_sentence(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([True, False])
+        self.belief_revision_system = ProbabilityBeliefRevision([True, False, 10])
 
         sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
         old_belief_base = []
@@ -272,7 +272,7 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(2/3, revised_belief_base[0].evidence)
 
     def test_probability_belief_revision_closed_world_assumption_and_uses_occams_razor_first_new_sentence(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([True, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([True, True, 10])
 
         sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
         old_belief_base = []
@@ -282,7 +282,7 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(2/3, revised_belief_base[0].evidence)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_first_new_sentence(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
 
         sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
         old_belief_base = []
@@ -292,7 +292,7 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.318, revised_belief_base[0].evidence, 2)
     
     def test_probability_belief_revision_without_closed_world_assumption(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, False])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, False, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
@@ -308,7 +308,7 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(1.5/3.5, revised_belief_base[2].evidence)
 
     def test_probability_belief_revision_without_closed_world_assumption_adding_sentence_again(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, False])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, False, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
@@ -324,7 +324,7 @@ class BeliefRevisionTest(TestCase):
     
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
@@ -340,7 +340,7 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.26, revised_belief_base[2].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_adding_sentence_again(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
@@ -355,7 +355,7 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.188, revised_belief_base[1].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_adding_sentence_again_multiple_times(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
@@ -374,7 +374,7 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.173, another_revised_belief_base[1].evidence, 2)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_multiple_times(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([False, True])
+        self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
 
         self.belief_revision_system.observed_data['RDGX'] = 0.5
         self.belief_revision_system.observed_data['R!DG!X'] = 0.5
