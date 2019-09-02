@@ -103,7 +103,7 @@ def create_random_txt_for_map():
             '''If no possible tile was found, start again, otherwise choose a tile'''
             if len(intersected_list) > 0:
                 if ' ' in intersected_list:
-                    intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+                    intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
                 MAP[row, column] = random.choice(intersected_list)
             else:
                 need_restart = True

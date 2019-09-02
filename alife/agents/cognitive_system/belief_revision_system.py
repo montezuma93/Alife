@@ -210,7 +210,8 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
 
         self.closed_world_assumption = belief_revision_system_args[0]
         self.uses_occams_razor_principle = belief_revision_system_args[1]
-        self.pseudo_sample_size = int(belief_revision_system_args[2])
+        if self.uses_occams_razor_principle == True:
+            self.pseudo_sample_size = int(belief_revision_system_args[2])
 
     def set_closed_world_assumption(self, has_closed_world_assumption):
         self.closed_world_assumption = has_closed_world_assumption

@@ -102,7 +102,6 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                 ((self.delta + 0.5 - self.risk_aversion) * (1-self.ambiguity_aversion * normalized_ambiguity_of_solution) * math.pow(probability,self.gamma)) +  math.pow(counter_probability,self.gamma))
             self.solution_table[key] = utility * weightning
 
-        print(self.solution_table)
         decision_made = self.solution_to_action_mapping.get(max(self.solution_table.items(), key=operator.itemgetter(1))[0])
         return decision_made
 
@@ -341,12 +340,15 @@ class QLearningDecisionMakingSystem:
 
  
     def update_policy(self, reward, next_observation, next_available_sentences, recent_health):
-        if not self.last_state_key:
-            key = self.create_key(next_observation, next_available_sentences, recent_health)
-            self.add_state(key)
-        reward = self.reward_table.get(reward) if reward in self.reward_table else self.reward_for_exploration
-        next_state = self.create_key(next_observation, next_available_sentences, recent_health)
-        maximum_future_reward = self.get_maximum_reward_for_next_sate(next_state)
+        if len(self.q_table.keys()) == 0:
+            return
+        else:
+            if not self.last_state_key:
+                key = self.create_key(next_observation, next_available_sentences, recent_health)
+                self.add_state(key)
+            reward = self.reward_table.get(reward) if reward in self.reward_table else self.reward_for_exploration
+            next_state = self.create_key(next_observation, next_available_sentences, recent_health)
+            maximum_future_reward = self.get_maximum_reward_for_next_sate(next_state)
 
         self.q_table[self.last_state_key][self.last_action_chosen] = ((1-self.learning_rate) * self.q_table[self.last_state_key][self.last_action_chosen] +
          self.learning_rate * (reward + self.discount_factor * maximum_future_reward))

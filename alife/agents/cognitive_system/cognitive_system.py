@@ -55,7 +55,7 @@ class Cognitive_System():
         if decision_making_system == "HumanLikeDecisionMakingUnderUncertaintySystem":
             self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem(decision_making_system_args)
         elif decision_making_system == "QLearningDecisionMakingSystem":
-            self.decision_making_system = QLearningDecisionMakingSystem()
+            self.decision_making_system = QLearningDecisionMakingSystem(decision_making_system_args)
         else:
             print("Decision Making System not found")
 
@@ -89,6 +89,8 @@ class Cognitive_System():
                 available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
                 rows_to_add_to_logger.append([agent.id_num, "Available Knowledge", "# ".join([sentence.__str__() for sentence in available_knowledge])])
                 logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
+                self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
+                logging.info("Updated Decision Making Policy")
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
                 if type(self.decision_making_system) is HumanLikeDecisionMakingUnderUncertaintySystem:
                      rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.solution_table])
