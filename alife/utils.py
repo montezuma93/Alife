@@ -27,10 +27,8 @@ def overlap(p1, r1, p2, r2):
 def slide_apart(obj_1,obj_2):
     ''' Objects obj_1 and obj_2 slide away from each other until they no longer
         touch each other '''
-
     # Calculate the collision / overlap
     v_diff, overlap, d = collision(obj_1.pos,obj_1.radius,obj_2.pos,obj_2.radius)
-
     # If objects are are overlapping ...
     if overlap > 0:
         # ... slide them apart 

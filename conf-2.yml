@@ -1,0 +1,33 @@
+bugs:
+  1: alife.agents.evolution/SimpleEvolver/{'H':10}
+  2: alife.agents.evolution/SimpleEvolver/{'H':-10}
+  3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'SinglePropositionSystem',
+    'BeliefRevisionSystem':'ConditionalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithEvidence',
+    'DecisionMakingSystem':'QLearningDecisionMakingSystem', 'MentalMap':'True', 'ObservationSystem_Args':[],
+    'BeliefRevisionSystem_Args':['False'], 'WorkingMemorySystem_Args':['RANKING',
+    10], 'DecisionMakingSystem_Args':['True', 20, 0, 0, 0.7, 0.95, 0.5], 'CommunicationSystem_Args':['False',
+    10, 'RANKING']}
+objects:
+  bite_ratio: 0.05
+  bounce_damage: 0
+  damage_per_step: 0.033189556962391176
+  default_mass_bug: 300
+  default_mass_thing: 500
+  divide_limit: 2.0
+  flight_boost: 5.0
+  flight_speed: 5.0
+  init_energy: 1.0
+  terrain_damage: 0
+  touch_threshold: 0.9
+  toxic_damage: 3.3105246407816047
+world:
+  factor: 2
+  fps: 10
+  growth_rate:
+    ID_3: 0
+    ID_31: 0
+    ID_32: 0
+    ID_33: 0
+  max_grid_objects: 100
+  max_plant_size: 1500
+  tile_size: 64

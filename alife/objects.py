@@ -76,7 +76,7 @@ class Thing(pygame.sprite.DirtySprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.ID = ID
         self.radius = 3 + int(math.sqrt(mass/math.pi))
-        self.energy = mass
+        self.energy = mass*4
         self.pos = pos
         self.is_colliding = True
         self.rect, self.image = build_image(self.pos,self.radius,self.ID)
@@ -100,7 +100,8 @@ class Thing(pygame.sprite.DirtySprite):
         surface.blit(self.image, self.pos - self.radius)
 
     def draw_selected(self, surface):
-        """ Additional drawing if this object is selected """
+        pygame.draw.circle(surface, COLOR_BLACK, (int(self.pos[0]),int(self.pos[1])), int(self.radius *3), 4)
+      
         return
 
     def update(self):
@@ -112,7 +113,7 @@ class Thing(pygame.sprite.DirtySprite):
         if self.energy < 1:
             self.kill()
             return
-
+        '''
         while self.is_colliding:
             # Check for overlap with objects / terrain (if we are a rock or plant; else it is handled elsewhere)
             color,collision_obj,terrain_centre = world.collision_to_vision(self.pos,self.radius,self)
@@ -130,6 +131,7 @@ class Thing(pygame.sprite.DirtySprite):
                 self.is_colliding = False
             # Wrap
             self.wrap(world)
+            '''
         return
 
     def hit_by(self, creature, world):
@@ -145,17 +147,15 @@ class Thing(pygame.sprite.DirtySprite):
             creature.unitv
             vector_between_beeing_and_plant = (plant_location_x- creature_location_x, plant_location_y- creature_location_y)
             angle = angle_between([vector_between_beeing_and_plant[0], vector_between_beeing_and_plant[1]], [creature.unitv[0], creature.unitv[1]])
-            if angle > -0.75 and angle < 0.75:
-                bite = random.rand() * creature.energy_limit * BITE_RATIO
-                
-                self.energy = self.energy - bite
-                # Creature can eat me and will get energy
-                plants_toxicity = get_plant_toxicity(self, world)
-                if plants_toxicity == "X": 
-                    creature.energy = creature.energy - TOXIC_DAMAGE
-                else: 
-                    print(bite)
-                    creature.energy = creature.energy + bite
+            #if angle > -0.25 and angle < 0.25:
+            bite = random.rand() * creature.energy_limit * BITE_RATIO
+            self.energy = self.energy - bite
+            # Creature can eat me and will get energy
+            plants_toxicity = get_plant_toxicity(self, world)
+            if plants_toxicity == "X": 
+                creature.energy = creature.energy - TOXIC_DAMAGE
+            else: 
+                creature.energy = creature.energy + bite
         elif self.ID == ID_ROCK:
             # I am a rock
             creature.energy = creature.energy - creature.speed * BOUNCE_DAMAGE         # Ouch!
@@ -306,6 +306,7 @@ class Creature(Thing):
         #Get nearby objects
         nearby_objects = get_nearby_objects(self, world)
 
+
         # Unless we are flying, we will collide with any objects we overlap with
         if self.speed < FLIGHT_SPEED:
 
@@ -325,7 +326,6 @@ class Creature(Thing):
         # Reinforcement learning
         reward = self.energy - self._energy              # reward = energy diff from last timestep
         self._energy = self.energy                       # (save the current energy)
-        x, y = world.pos2grid(self.pos)
         currentHealth = Health.moreThanThreeQuarter
         if self.energy < self.init_energy/4*3 and self.energy >= self.init_energy/2:
             currentHealth = Health.moreThanHalf
@@ -361,10 +361,10 @@ class Creature(Thing):
             if (any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]])):
                 if(any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[0]])):
                     angle = 0
-                    speed = 0.1
+                    speed = 0.03
                 else:
                     angle = 0
-                    speed = 2
+                    speed = 2.5
             # Turn to the left
             elif any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = -0.1
@@ -379,24 +379,33 @@ class Creature(Thing):
         # TODO Prefere Places where bug not have been before, will be done after adding Spatial Knowledge
         elif action.intension.name == Action.explore.name:
             if any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
-                angle = math.pi
-                speed = 1
+                angle = 0.2
+                speed = 0.5
             # Turn to the right
             elif any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
-                angle = 1
-                speed = 1
+                angle = 0.1
+                speed = 0.5
             # Turn to the left
             elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
-                angle = -1
+                angle = -0.1
+                speed = 0.5
+            elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[0]]):
+                angle = 0
                 speed = 1
             else:
                 if action.location is not None:
-                    go_to = choices(population=["Random", "Location"], weights=[0.9, 0.1], k=1)
+                    go_to = choices(population=["Random", "Location"], weights=[0.1, 0.9], k=1)
                     if go_to[0] == "Location":
-                        location_wanted_x,location_wanted_y  = world.grid2pos(action.location)
-                        vector_wanted = (location_wanted_x- self.pos[0], location_wanted_y- self.pos[1])
-                        angle = angle_between([location_wanted_x, location_wanted_y], [self.pos[0], self.pos[1]])
-                        speed = 1
+                        # is same grid?
+                        dist = math.sqrt((self.pos[0] - action.location[0])**2 + (self.pos[1] - action.location[1])**2)
+                        if dist < 100:
+                            action.mental_map.remove((action.location[0], action.location[1]))
+                            angle = 0
+                            speed = 0.5
+                        else:
+                            vector_wanted = (action.location[0]- self.pos[0], action.location[1]- self.pos[1])
+                            angle = angle_between([vector_wanted[0], vector_wanted[1]], [self.unitv[0], self.unitv[1]])
+                            speed = 0.75
                     else:
                         angle = 0.01
                         speed = 1
@@ -472,9 +481,9 @@ class Creature(Thing):
         # Body
         pygame.draw.circle(surface, rgb2color(self.observation[IDX_COLIDE],id2rgb[ID_ANIMAL]), (int(self.pos[0]),int(self.pos[1])), int(self.radius + 3), 4)
         # Rangers
-        pygame.draw.circle(surface, rgb2color(self.observation[IDX_PROBE1],COLOR_BLACK), (int((self.pos+self.pa1)[0]),int((self.pos+self.pa1)[1])), int(self.radius*3.), 2)
-        pygame.draw.circle(surface, rgb2color(self.observation[IDX_PROBE2],COLOR_BLACK), (int((self.pos+self.pa2)[0]),int((self.pos+self.pa2)[1])), int(self.radius*3.), 2)
-        pygame.draw.circle(surface, rgb2color(self.observation[IDX_COLIDE],COLOR_BLACK), (int(self.pos[0]),int(self.pos[1])), int(self.radius*4.), 3)
+        pygame.draw.circle(surface, rgb2color(self.observation[IDX_PROBE1],COLOR_BLACK), (int((self.pos+self.pa1)[0]),int((self.pos+self.pa1)[1])), int(self.radius*2), 2)
+        pygame.draw.circle(surface, rgb2color(self.observation[IDX_PROBE2],COLOR_BLACK), (int((self.pos+self.pa2)[0]),int((self.pos+self.pa2)[1])), int(self.radius*2), 2)
+        pygame.draw.circle(surface, rgb2color(self.observation[IDX_COLIDE],COLOR_BLACK), (int(self.pos[0]),int(self.pos[1])), int(self.radius*2), 3)
         # Health/Calories/Energy level
         pygame.draw.line(surface, COLOR_WHITE, self.pos-20, [self.pos[0]+20,self.pos[1]-20], 1)
         pygame.draw.line(surface, COLOR_WHITE, self.pos-20, [self.pos[0]-20+(self.observation[IDX_ENERGY]*40),self.pos[1]-20], 5)
@@ -507,13 +516,13 @@ def get_nearby_objects(agent, world):
                 # Just consider rock and tree trunks
                 if things[i].ID == ID_ROCK or things[i].ID == ID_TREE_TRUNK or things[i].ID in PLANT_IDS:
                     # ... how much overlap with the this thing?
-                    olap = overlap(agent.pos,agent.radius*1,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos,agent.radius*2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_main.append(things[i].ID) if things[i].ID not in nearby_objects_main else nearby_objects_main
-                    olap = overlap(agent.pos+agent.pa1,agent.radius*1.2,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos+agent.pa1,agent.radius*2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_right.append(things[i].ID) if things[i].ID not in nearby_objects_right else nearby_objects_right
-                    olap = overlap(agent.pos+agent.pa2,agent.radius*1.2,things[i].pos,things[i].radius)
+                    olap = overlap(agent.pos+agent.pa2,agent.radius*2,things[i].pos,things[i].radius)
                     if(olap > 0):
                         nearby_objects_left.append(things[i].ID) if things[i].ID not in nearby_objects_left else nearby_objects_left
     return (nearby_objects_main, nearby_objects_left, nearby_objects_right)

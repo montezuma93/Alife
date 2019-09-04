@@ -23,7 +23,7 @@ class MultiplePropositionSystem(OberservationToPropositionSystem):
             for entry in next_list:
                 entry.append(color_proposition)
                 generated_propositions.append(Sentence([(entry, reward)], evidence))
-        
+    
         return generated_propositions
 
 

@@ -6,6 +6,8 @@ import numpy as np
 from functools import reduce
 from prettytable import PrettyTable
 import csv
+import sys
+import os
 
 from graphics import *
 from objects import *
@@ -104,6 +106,7 @@ def create_random_txt_for_map():
             if len(intersected_list) > 0:
                 if ' ' in intersected_list:
                     intersected_list = np.append(intersected_list, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+                intersected_list = [' ']
                 MAP[row, column] = random.choice(intersected_list)
             else:
                 need_restart = True
@@ -133,7 +136,7 @@ class World:
         This is the world (environment) that objects exist in. 
     """
 
-    def __init__(self,fname=None,init_sprites=0):
+    def __init__(self,fname=None,init_sprites=0, test_run_name = None, agent_string = None):
 
         # Load the configuration
         cfg = get_conf(section='world')
@@ -147,6 +150,11 @@ class World:
         self.PLANT_TO_USE = ID_PLANT
         SCREEN = array([self.WIDTH, self.HEIGHT])
 
+
+        sun = pygame.image.load("./img/Sun.png")
+        sunrect = sun.get_rect()
+        moon = pygame.image.load("./img/Moon.png")
+        moonrect = moon.get_rect()
         step = 0
 
         ## GRID REGISTER and GRID COUNT 
@@ -190,7 +198,6 @@ class World:
 
         # Get a list of the agents we may deploy 
         agents = get_conf(section='bugs').values()
-        print(agents)
 
         # Some animate creatures
         #for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
@@ -207,24 +214,26 @@ class World:
         self.create_proposition_table()
         ### Add plants and rocks and adjust params for Things and Livings based on random
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
-
-        ### Write configuration to file
-        f = open("log.txt","w+")
-        x = PrettyTable()
-        header = ["Plant Type"] + list(self.proposition_table_list["3"].keys()) 
-        x.field_names = header
-        for key, row in self.proposition_table_list.items():
-            row_to_add = [key] + list(row.values())     
-            x.add_row(row_to_add)
-        f.write(x.get_string())
-        f.write("\r\n")
-        f.close()
-        
-        header = ["AgentID", "Operation", "Result"]
-        csv_file = open("agent.csv", "w")
-        writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
-        writer.writeheader()
-        csv_file.close()
+        if test_run_name is not None:
+            open('log.txt', 'w').close()
+            self.create_agents(agents, 10, agent_string)
+            ### Write configuration to file
+            f = open(test_run_name + ".txt","w+")
+            x = PrettyTable()
+            header = ["Plant Type"] + list(self.proposition_table_list["3"].keys()) 
+            x.field_names = header
+            for key, row in self.proposition_table_list.items():
+                row_to_add = [key] + list(row.values())     
+                x.add_row(row_to_add)
+            f.write(x.get_string())
+            f.write("\r\n")
+            f.close()
+            
+            header = ["AgentID", "Operation", "Result"]
+            csv_file = open(test_run_name + ".csv", "w")
+            writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
+            writer.writeheader()
+            csv_file.close()
 
         ## MAIN LOOP ##
         sel_obj = None 
@@ -388,6 +397,12 @@ class World:
             for r in self.allSprites:
                 r.live(self)
 
+            # Just for Game Results
+            if test_run_name is not None:
+                if len(self.creatures) == 0 or step > 15000:
+                    self.create_results(test_run_name, self.creatures, step)              
+                    sys.exit()
+
             if GRAPHICS_ON:
 
                 # Update sprites
@@ -410,35 +425,56 @@ class World:
                 if sel_obj is not None:
                     sel_obj.draw_selected(self.screen)
                 # Display
+                pygame.display.update(rects)
+                '''
                 if self.IS_DAY_TIME:
-                    pygame.display.update(rects)
+                    self.screen.blit(sun, sunrect)
+                    pygame.display.flip()
                 else:
-                    darken_percent = .30
+                    self.screen.blit(moon, moonrect)
+                    pygame.display.flip()
+
+                    darken_percent = .10
                     dark = pygame.Surface(self.screen.get_size()).convert_alpha()
                     dark.fill((0, 0, 0, darken_percent*255))
                     self.screen.blit(dark, (0, 0))
-
+                    '''
+                
                 pygame.display.flip()
-                pygame.time.delay(self.FPS)
+                #pygame.time.delay(self.FPS)
 
     def create_things_and_creatures(self, max_plant_size, agents):
         positions_used_plants = []
         for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
-            for i in range(random.randint(1,19)):
+            for i in range(random.randint(5,10)):
                 random_position = self.random_position(positions_used_plants = positions_used_plants)
-                positions_used_plants.append(random_position)
-                Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
+                if random_position is not None:
+                    positions_used_plants.append(random_position)
+                    Thing(random_position, mass=350, ID=thing_type)
                 #Add rocks and tree trunks
         for thing_type in (ID_ROCK, ID_TREE_TRUNK):
             positions_used_objects = []
-            for i in range(random.randint(10,20)):
+            for i in range(random.randint(10,25)):
                 random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
-                positions_used_objects.append(random_position)
-                Thing(random_position, mass=100 + random.rand()*max_plant_size, ID=thing_type)
+                if random_position is not None:
+                    positions_used_objects.append(random_position)
+                    Thing(random_position, mass=350, ID=thing_type)
 
         for r in self.allSprites:
             self.add_to_register(r)
         
+    def create_agents(self, agents, amount, agent_string):
+        for i in range(amount):
+            p = self.random_position()
+            Creature(p + random.randn()*(TILE_SIZE/2), dna = list(agents)[2], ID=4)
+        if 'RANKING' in agent_string:
+             self.evidence_interpreation = 'RANKING'
+        elif 'PROBABILITY' in agent_string:
+            self.evidence_interpreation = 'PROBABILITY'
+        elif 'EVIDENCE' in agent_string:
+            self.evidence_interpreation = 'EVIDENCE'
+        print(self.evidence_interpreation)
+
     def adjust_settings(self, filename='conf.yml'):
         with open(filename) as file:
             config_file = yaml.load(file)
@@ -446,8 +482,8 @@ class World:
             cfg_objects = config_file['objects']
             for growth_rate in cfg_world['growth_rate']:
                 cfg_world['growth_rate'][growth_rate] = 0
-            cfg_objects['toxic_damage'] = random.uniform(2, 10)
-            cfg_objects['damage_per_step'] = random.uniform(0.01, 0.1)
+            cfg_objects['toxic_damage'] = 2
+            cfg_objects['damage_per_step'] = 0.05
             with open(filename, "w") as file:
                 yaml.dump(config_file, file)
         with open(filename) as file:
@@ -468,7 +504,7 @@ class World:
                 'night_': random.choice(plants_toxicity)
             }      
 
-    def random_position(self, on_empty=False, positions_used_plants = [], positions_used_objects = None,  ):
+    def random_position(self, on_empty=False, positions_used_plants = [], positions_used_objects = None):
         ''' Find a random position somewhere on the screen over land tiles
             (if specified -- only on an empty tile) '''
         # For adding things like rock and tree, Want them close to a plant
@@ -477,10 +513,10 @@ class World:
             point = positions_used_plants[np.random.randint(0 , len(positions_used_plants)-1)]
             calculated_point_x = np.random.uniform(point[0] -20 , point[0] +20)
             calculated_point_y = np.random.uniform(point[1] -20 , point[1] +20)
-            distance_to_plant = calculate_distance(calculated_point_x, point[0],calculated_point_y, point[1])
+            distance_to_plant = calculate_distance(calculated_point_x, calculated_point_y, point[0], point[1])
             for point_of_object in positions_used_objects:
-                distance_to_object = calculate_distance(calculated_point_x, point_of_object[0], calculated_point_y, point_of_object[1])     
-                if distance_to_object < 20 and distance_to_plant < 10 and distance_to_plant > 30:
+                distance_to_object = calculate_distance(calculated_point_x, calculated_point_y, point_of_object[0], point_of_object[1])     
+                if distance_to_object < 50 or distance_to_plant > 25 or distance_to_plant < 10:
                     distance_is_wrong = True
             if not distance_is_wrong:
                 return array([calculated_point_x, calculated_point_y])
@@ -496,13 +532,14 @@ class World:
                         calculated_position = self.grid2pos((k,j)) + random.rand(2) * TILE_SIZE - TILE_SIZE*0.5
                         distance_is_wrong = False
                         for point in positions_used_plants:
-                            distance = calculate_distance(point[0], point[1],calculated_position[0], calculated_position[1])
-                            if distance < 100:
+                            distance = calculate_distance(point[0], point[1], calculated_position[0], calculated_position[1])
+                            if distance < 200:
                                 distance_is_wrong = True
                         if not distance_is_wrong:
                             return calculated_position
         # There are no empty tiles
-        print("Warning: No empty tiles to place stuff on")
+        # print("Warning: No empty tiles to place stuff on")
+        return None
         return self.random_position(on_empty=False)
 
     def grid2pos(self,grid_square):
@@ -664,7 +701,8 @@ class World:
                             # If the overlap greater than the outer + inner radius ...
                             if olap > (s_radius + s_collision_radius):
                                 # it means we are completely overlapped by this object, return it now
-                                return object2rgb(excl.ID,things[i].ID), things[i], None
+                                if things[i].ID != 1 and things[i].ID != 2:
+                                    return object2rgb(excl.ID,things[i].ID), things[i], None
 
                             # distance of the outer - inner radius
                             d = (s_radius - s_collision_radius)
@@ -672,8 +710,9 @@ class World:
                             # If the overlap is greater than the (outer - inner) radius ...
                             if olap > d:
                                 # it means the thing is touching us, save it but don't return yet
-                                thing = things[i]
-                                vision = vision + object2rgb(excl.ID,things[i].ID) * get_intensity(1., float(things[i].radius)/s_collision_radius)
+                                if things[i].ID != 1 and things[i].ID != 2:
+                                    thing = things[i]
+                                    vision = vision + object2rgb(excl.ID,things[i].ID) * get_intensity(1., float(things[i].radius)/s_collision_radius)
 
                             # Otherwise ... (if the overlap is greater than 0, but not touching or covering us)
                             else:
@@ -689,6 +728,135 @@ class World:
             # TODO could be relative, sigmoid/logarithmic, gaussian ?
             vision = clip(vision,0.0,TOUCH_THRESHOLD) 
         return vision, thing, None
+
+
+    
+    def create_results(self, test_run_name, creatures, step):
+        # Game Over -> Get Results
+        with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore") as scraped:
+            reader = csv.reader(scraped, delimiter=';')
+            agents = {}
+            for row in reader:
+                if row:  # avoid blank lines
+                    if row[0] in agents:
+                        if row[2] == "nontoxic":
+                            agents[row[0]]["nontoxic"] = agents[row[0]]["nontoxic"] + 1
+                        elif row[2] == "toxic":
+                            agents[row[0]]["toxic"] = agents[row[0]]["toxic"] + 1
+                        elif row[1] == "Belief":
+                            agents[row[0]]["Belief"] = row[2]
+                    else:
+                        if row[2] == "nontoxic":
+                            agents[row[0]] = {"nontoxic":1, "toxic":0, "Belief": ""}
+                        elif row[2] == "toxic":
+                            agents[row[0]] = {"nontoxic":0, "toxic":1, "Belief": ""}
+                        elif row[1] == "Belief":
+                            agents[row[0]] = {"nontoxic":0, "toxic":1, "Belief": row[2]}
+        scraped.close()
+
+        new_created = False
+        last_row = 0
+        if not os.path.isfile('./' + test_run_name + '-results.csv'):
+            header = ["RunId" ,"ResultType", "AmountOfBugs", "Step"]
+            csv_file = open(test_run_name + "-results.csv", "w")
+            writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
+            writer.writeheader()
+            csv_file.close()
+            new_created = True
+        if not new_created:
+            with open(test_run_name + '-results.csv', "r", encoding="utf-8", errors="ignore") as scraped:
+                reader = csv.reader(scraped, delimiter=';')
+                for row in reader:
+                    if row:  # avoid blank lines
+                        last_row = row[0]
+            scraped.close
+        next_run = str(int(last_row) + 1)
+        row_to_append = []
+        for agent, value in agents.items():
+            row_to_append.append([next_run, "RewardPos", agent, value["nontoxic"]])
+            row_to_append.append([next_run, "RewardNeg", agent, value["toxic"]])
+            row_to_append.append([next_run, "LastBelief", agent, value["Belief"]])
+            belief = value["Belief"].split("#")
+            amount_of_right = 0
+            amount_of_wrong = 0
+            for color in self.proposition_table_list:
+                for entry, value in self.proposition_table_list[color].items():
+                    needs_to_contain = []
+                    not_needs_to_contain = []
+                    if color == "3":
+                        needs_to_contain.append("GREEN") 
+                    elif color == "31":
+                        needs_to_contain.append("ORANGE") 
+                    elif color == "32":
+                        needs_to_contain.append("PURPLE") 
+                    elif color == "33":
+                        needs_to_contain.append("BLUE") 
+                    if "1" in entry:
+                        needs_to_contain.append("ROCK")
+                    else:
+                        not_needs_to_contain.append("ROCK")
+                    if "2" in entry:
+                        needs_to_contain.append("TREE")
+                    else:
+                        not_needs_to_contain.append("TREE")
+                    if "day" in entry:
+                        needs_to_contain.append("DAY")
+                        not_needs_to_contain.append("!DAY")
+                    if "night" in entry:
+                        needs_to_contain.append("!DAY")
+                    evidence_for_toxic = None
+                    evidence_for_non_toxic = None
+                    for sentence in belief:
+                        if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
+                            if "nontoxic" in sentence:
+                                splited = sentence.split("evidence: ")
+                                evidence_for_non_toxic = splited[1]
+                                evidence_for_non_toxic = float(evidence_for_non_toxic)
+                            else:
+                                splited = sentence.split("evidence: ")
+                                evidence_for_toxic = splited[1]
+                                evidence_for_toxic = float(evidence_for_toxic)
+                    if value == "X":
+                        if self.evidence_interpreation == "RANKING":
+                            if evidence_for_toxic < evidence_for_non_toxic:
+                                amount_of_right = amount_of_right + 1
+                            elif evidence_for_toxic > evidence_for_non_toxic:
+                                amount_of_wrong = amount_of_wrong + 1
+                        else:
+                            evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
+                            evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
+                            if evidence_for_toxic > evidence_for_non_toxic:
+                                amount_of_right = amount_of_right + 1
+                            elif evidence_for_toxic < evidence_for_non_toxic:
+                                amount_of_wrong = amount_of_wrong + 1
+                    elif value == "!X":
+                        if self.evidence_interpreation == "RANKING":
+                            if evidence_for_toxic > evidence_for_non_toxic:
+                                amount_of_right = amount_of_right + 1
+                            elif evidence_for_toxic < evidence_for_non_toxic:
+                                amount_of_wrong = amount_of_wrong + 1
+                        else:
+                            evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
+                            evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
+                            if evidence_for_toxic < evidence_for_non_toxic:
+                                amount_of_right = amount_of_right + 1
+                            elif evidence_for_toxic > evidence_for_non_toxic:
+                                amount_of_wrong = amount_of_wrong + 1
+            row_to_append.append([next_run, "AmountOfRightProposition", agent, amount_of_right])
+            row_to_append.append([next_run, "AmountOfWrongProposition", agent, amount_of_wrong])
+                    
+
+
+
+
+
+
+        with open(test_run_name + '-results.csv', 'a', newline='') as csvFile:
+            writer = csv.writer(csvFile, delimiter =";")
+            writer.writerows([[next_run, "GameOver", str(len(creatures)), str(step)]])
+            writer.writerows(row_to_append)
+        csvFile.close()
+
 
 def object2rgb(ID_self, ID_other):
     '''

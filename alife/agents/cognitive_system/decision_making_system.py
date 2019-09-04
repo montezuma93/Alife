@@ -296,6 +296,8 @@ class QLearningDecisionMakingSystem:
 
     def make_decision(self, observations, available_sentences, recent_health):
         key = self.create_key(observations, available_sentences, recent_health)
+        if self.last_state_key == key:
+            return self.last_action_chosen
         if key not in self.q_table:
             self.add_state(key)
         
