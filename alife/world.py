@@ -7,7 +7,9 @@ from functools import reduce
 from prettytable import PrettyTable
 import csv
 import sys
+import rope.base.astutils
 import os
+import re
 
 from graphics import *
 from objects import *
@@ -16,7 +18,7 @@ from objects import *
 import joblib, glob, time, datetime
 # For loading config
 import yaml
-
+yaml.warnings({'YAMLLoadWarning': False})
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
 
@@ -197,7 +199,12 @@ class World:
             #Thing(self.random_position(), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
 
         # Get a list of the agents we may deploy 
-        agents = get_conf(section='bugs').values()
+        agents = None
+        if test_run_name is not None:
+            agents = get_conf(section='bugs', filename = test_run_name+'.yml').values()
+        else:
+            agents = get_conf(section='bugs').values()
+
 
         # Some animate creatures
         #for i in range(int(self.N_ROWS*FACTOR/10*self.N_COLS)):
@@ -208,17 +215,14 @@ class World:
 
         self.allSprites.clear(self.screen, background)
 
-        ### Adjust cf settings
-        self.adjust_settings()
         ### Create proposition table
         self.create_proposition_table()
         ### Add plants and rocks and adjust params for Things and Livings based on random
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
         if test_run_name is not None:
-            open('log.txt', 'w').close()
             self.create_agents(agents, 10, agent_string)
             ### Write configuration to file
-            f = open(test_run_name + ".txt","w+")
+            f = open(test_run_name + ".txt","a")
             x = PrettyTable()
             header = ["Plant Type"] + list(self.proposition_table_list["3"].keys()) 
             x.field_names = header
@@ -228,9 +232,27 @@ class World:
             f.write(x.get_string())
             f.write("\r\n")
             f.close()
-            
+
             header = ["AgentID", "Operation", "Result"]
             csv_file = open(test_run_name + ".csv", "w")
+            writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
+            writer.writeheader()
+            csv_file.close()
+        else:
+            ### Write configuration to file
+            f = open("agents.txt","w")
+            x = PrettyTable()
+            header = ["Plant Type"] + list(self.proposition_table_list["3"].keys()) 
+            x.field_names = header
+            for key, row in self.proposition_table_list.items():
+                row_to_add = [key] + list(row.values())     
+                x.add_row(row_to_add)
+            f.write(x.get_string())
+            f.write("\r\n")
+            f.close()
+
+            header = ["AgentID", "Operation", "Result"]
+            csv_file = open("agents.csv", "w")
             writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
             writer.writeheader()
             csv_file.close()
@@ -383,8 +405,8 @@ class World:
             '''
             
             day_timer = day_timer + 1
-            if day_timer >= 400:
-                print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
+            if day_timer >= 800:
+                #print("Time step %d; %d bugs alive" % (step,len(self.creatures)))
                 self.IS_DAY_TIME = not self.IS_DAY_TIME
                 day_timer = 0
 
@@ -399,7 +421,7 @@ class World:
 
             # Just for Game Results
             if test_run_name is not None:
-                if len(self.creatures) == 0 or step > 15000:
+                if len(self.creatures) == 0 or step > 7000:
                     self.create_results(test_run_name, self.creatures, step)              
                     sys.exit()
 
@@ -426,22 +448,22 @@ class World:
                     sel_obj.draw_selected(self.screen)
                 # Display
                 pygame.display.update(rects)
-                '''
-                if self.IS_DAY_TIME:
-                    self.screen.blit(sun, sunrect)
-                    pygame.display.flip()
+                if test_run_name is None:
+                    if self.IS_DAY_TIME:
+                        self.screen.blit(sun, sunrect)
+                        pygame.display.flip()
+                    else:
+                        self.screen.blit(moon, moonrect)
+                        pygame.display.flip()
+                        '''
+                        darken_percent = .10
+                        dark = pygame.Surface(self.screen.get_size()).convert_alpha()
+                        dark.fill((0, 0, 0, darken_percent*255))
+                        self.screen.blit(dark, (0, 0))
+                        '''
                 else:
-                    self.screen.blit(moon, moonrect)
                     pygame.display.flip()
-
-                    darken_percent = .10
-                    dark = pygame.Surface(self.screen.get_size()).convert_alpha()
-                    dark.fill((0, 0, 0, darken_percent*255))
-                    self.screen.blit(dark, (0, 0))
-                    '''
-                
-                pygame.display.flip()
-                #pygame.time.delay(self.FPS)
+                    #pygame.time.delay(self.FPS)
 
     def create_things_and_creatures(self, max_plant_size, agents):
         positions_used_plants = []
@@ -467,27 +489,14 @@ class World:
         for i in range(amount):
             p = self.random_position()
             Creature(p + random.randn()*(TILE_SIZE/2), dna = list(agents)[2], ID=4)
-        if 'RANKING' in agent_string:
-             self.evidence_interpreation = 'RANKING'
-        elif 'PROBABILITY' in agent_string:
-            self.evidence_interpreation = 'PROBABILITY'
-        elif 'EVIDENCE' in agent_string:
-            self.evidence_interpreation = 'EVIDENCE'
-        print(self.evidence_interpreation)
+        if agent_string is not None:
+            if 'RANKING' in agent_string:
+                self.evidence_interpreation = 'RANKING'
+            elif 'PROBABILITY' in agent_string:
+                self.evidence_interpreation = 'PROBABILITY'
+            elif 'EVIDENCE' in agent_string:
+                self.evidence_interpreation = 'EVIDENCE'
 
-    def adjust_settings(self, filename='conf.yml'):
-        with open(filename) as file:
-            config_file = yaml.load(file)
-            cfg_world = config_file['world']
-            cfg_objects = config_file['objects']
-            for growth_rate in cfg_world['growth_rate']:
-                cfg_world['growth_rate'][growth_rate] = 0
-            cfg_objects['toxic_damage'] = 2
-            cfg_objects['damage_per_step'] = 0.05
-            with open(filename, "w") as file:
-                yaml.dump(config_file, file)
-        with open(filename) as file:
-            config_file = yaml.load(file)
 
     def create_proposition_table(self):
         self.proposition_table_list = {}
@@ -806,16 +815,33 @@ class World:
                         needs_to_contain.append("!DAY")
                     evidence_for_toxic = None
                     evidence_for_non_toxic = None
+                    if self.evidence_interpreation == "EVIDENCE":
+                        evidence_for_non_toxic = 0
+                        evidence_for_toxic = 0
                     for sentence in belief:
-                        if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
-                            if "nontoxic" in sentence:
-                                splited = sentence.split("evidence: ")
-                                evidence_for_non_toxic = splited[1]
-                                evidence_for_non_toxic = float(evidence_for_non_toxic)
-                            else:
-                                splited = sentence.split("evidence: ")
-                                evidence_for_toxic = splited[1]
-                                evidence_for_toxic = float(evidence_for_toxic)
+                        if self.evidence_interpreation != "EVIDENCE":
+                            if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
+                                if "nontoxic" in sentence:
+                                    splited = sentence.split("evidence: ")
+                                    evidence_for_non_toxic = splited[1]
+                                    evidence_for_non_toxic = float(evidence_for_non_toxic)
+                                else:
+                                    splited = sentence.split("evidence: ")
+                                    evidence_for_toxic = splited[1]
+                                    evidence_for_toxic = float(evidence_for_toxic)
+                        else:
+                            or_sentences = re.compile("\sv\s").split(sentence)
+                            for or_sentence in or_sentences:
+                                if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
+                                    if "nontoxic" in or_sentence:
+                                        splited = sentence.split("evidence: ")
+                                        evidence_for_non_toxic_part = splited[1]
+                                        evidence_for_non_toxic = evidence_for_non_toxic + float(evidence_for_non_toxic_part)
+                                    else:
+                                        splited = sentence.split("evidence: ")
+                                        evidence_for_toxic_part = splited[1]
+                                        evidence_for_toxic = evidence_for_toxic+ float(evidence_for_toxic_part)
+
                     if value == "X":
                         if self.evidence_interpreation == "RANKING":
                             if evidence_for_toxic < evidence_for_non_toxic:
