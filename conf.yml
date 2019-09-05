@@ -5,14 +5,14 @@ bugs:
     'WorkingMemorySystem':'WorkingMemoryWithEvidence','DecisionMakingSystem':'HumanLikeDecisionMakingUnderUncertaintySystem',
     'MentalMap':'True','ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'],
     'WorkingMemorySystem_Args':['RANKING',100], 'DecisionMakingSystem_Args':[0.01,
-    0.9, 'RANKING', 'True', 'True', 5, 14,14, 15,7, 7, 7, 7],'CommunicationSystem_Args':['False',
+    0.9, 'RANKING', 'True', 'True', 5, 14,14, 15,7, 7, 7, 7],'CommunicationSystem_Args':['True',
     10, 'RANKING']}
 log_file:
   name: agents.csv
 objects:
   bite_ratio: 0.05
   bounce_damage: 0
-  damage_per_step: 0.05
+  damage_per_step: 0.075
   default_mass_bug: 300
   default_mass_thing: 500
   divide_limit: 2.0
@@ -21,7 +21,7 @@ objects:
   init_energy: 1.0
   terrain_damage: 0
   touch_threshold: 0.9
-  toxic_damage: 2
+  toxic_damage: 2.5
 world:
   factor: 2
   fps: 100

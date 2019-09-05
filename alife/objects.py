@@ -399,7 +399,7 @@ class Creature(Thing):
                     if go_to[0] == "Location":
                         # is same grid?
                         dist = math.sqrt((self.pos[0] - action.location[0])**2 + (self.pos[1] - action.location[1])**2)
-                        if dist < 50:
+                        if dist < 75:
                             action.mental_map.remove((action.location[0], action.location[1]))
                             angle = 0
                             speed = 0.5

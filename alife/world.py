@@ -421,7 +421,7 @@ class World:
 
             # Just for Game Results
             if test_run_name is not None:
-                if len(self.creatures) == 0 or step > 17500:
+                if len(self.creatures) == 0 or step > 20000:
                     self.create_results(test_run_name, self.creatures, step)              
                     sys.exit()
 
