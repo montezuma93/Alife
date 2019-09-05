@@ -26,9 +26,6 @@ class Cognitive_System():
         file.close()
         
 
-
-        self.factor_for_communication_sentenes = 0.5
-
         if observation_to_proposition_system == "MultiplePropositionSystem":
             self.observation_to_proposition_system = MultiplePropositionSystem(observation_to_proposition_system_args)
         elif observation_to_proposition_system == "OccamsRazorMultiplePropositionSystem":
@@ -78,6 +75,7 @@ class Cognitive_System():
         self.last_reward = None
         self.last_generated_propositions = None
         self.last_available_knowledge = None
+        self.last_agent_communicated_with = None
 
 
 
@@ -197,17 +195,20 @@ class Cognitive_System():
 
     def communicate(self, agent, other_agent):
         if self.communication_system.able_to_communicate == 'True':
-            rows_to_add_to_logger = []
-            
-            # Knowledge of the other agent
-            other_agents_available_knowledge = other_agent.cognitive_system.working_memory_system.retrieve_knowledge(None, other_agent.cognitive_system.long_term_memory)
-            rows_to_add_to_logger.append([agent.id_num, "Commnicate",  ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])])
-            new_information = self.communication_system.filter_sentences(other_agents_available_knowledge)
-            revised_knowledge = self.belief_revision_system.revise_belief_base(new_information, self.long_term_memory.stored_sentences)
-            self.long_term_memory.update(revised_knowledge)
+            if self.last_agent_communicated_with != other_agent:
+                self.last_agent_communicated_with = other_agent
+                rows_to_add_to_logger = []
+                
+                # Knowledge of the other agent
+                other_agents_available_knowledge = other_agent.cognitive_system.working_memory_system.retrieve_knowledge(None, other_agent.cognitive_system.long_term_memory)
+                rows_to_add_to_logger.append([agent.id_num, "Commnicate",  ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])])
+                new_information = self.communication_system.filter_sentences(other_agents_available_knowledge)
+                revised_knowledge = self.belief_revision_system.revise_belief_base(new_information, self.long_term_memory.stored_sentences)
+                self.long_term_memory.update(revised_knowledge)
 
-            if len(rows_to_add_to_logger) > 0:
-                with open('agent.csv', 'a') as csvFile:
-                    writer = csv.writer(csvFile, delimiter =";")
-                    writer.writerows(rows_to_add_to_logger)
-                csvFile.close()
+                if len(rows_to_add_to_logger) > 0:
+                    with open(self.log_file_name, 'a') as csvFile:
+                        writer = csv.writer(csvFile, delimiter =";")
+                        writer.writerows(rows_to_add_to_logger)
+                    csvFile.close()
+                
