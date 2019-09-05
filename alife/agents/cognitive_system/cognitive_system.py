@@ -15,9 +15,11 @@ class Cognitive_System():
 
     def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str,
          has_mental_map, observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args,
-         communication_system_args):
+         communication_system_args, yml_file = 'conf.yml'):
+        conf_yml = 'conf.yml' if yml_file is None else yml_file
+
         self.log_file_name = None
-        with open('conf.yml') as file:
+        with open(conf_yml) as file:
             config_file = yaml.load(file)
             log_file = config_file['log_file']
             self.log_file_name = log_file['name']
@@ -26,13 +28,6 @@ class Cognitive_System():
 
 
         self.factor_for_communication_sentenes = 0.5
-
-        logging.basicConfig(filename="log.txt",
-                                    filemode='a',
-                                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                                    datefmt='%H:%M:%S',
-                                    level=logging.INFO)
-        logging.info("\r\n")
 
         if observation_to_proposition_system == "MultiplePropositionSystem":
             self.observation_to_proposition_system = MultiplePropositionSystem(observation_to_proposition_system_args)
@@ -81,7 +76,8 @@ class Cognitive_System():
         self.last_color_variable = None
         self.last_propositions = None
         self.last_reward = None
-        logging.info("Cognitive System initialized")
+        self.last_generated_propositions = None
+        self.last_available_knowledge = None
 
 
 
@@ -97,22 +93,21 @@ class Cognitive_System():
             porposition_list = [proposition.variable for proposition in propositions]
             color_variable = color_proposition.variable
 
-            logging.info("Received act request for agent %s, with color_proposition %s, propositions %s and reward %s"  %
-            (agent.id_num, color_proposition.name if color_proposition is not None else "None", ",".join([proposition.name for proposition in propositions]), reward.name))
-            
-            generated_propositions = self.observation_to_proposition_system.observation_to_proposition(color_proposition, propositions, reward)
-            logging.info("Generated Sentences:\r\n %s" % ( ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions])))
-            
+            generated_propositions = self.last_generated_propositions
+            if color_variable != self.last_color_variable or collections.Counter(porposition_list) != collections.Counter(self.last_propositions) or reward != self.last_reward:
+                generated_propositions = self.observation_to_proposition_system.observation_to_proposition(color_proposition, propositions, reward)
+                self.last_generated_propositions = generated_propositions
+
             rows_to_add_to_logger.append([str(agent.id_num), "Observation", "# ".join([generated_proposition.__str__() for generated_proposition in generated_propositions])])
             rows_to_add_to_logger.append([agent.id_num, "Current Health", currentHealth])
             
             if reward == Reward.none:
-                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
-                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge", "# ".join([sentence.__str__() for sentence in available_knowledge])])
-                logging.info("Available Knowledge: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
+                available_knowledge = self.last_available_knowledge
+                if color_variable != self.last_color_variable or collections.Counter(porposition_list) != collections.Counter(self.last_propositions) or reward != self.last_reward:
+                    available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
+                    self.last_available_knowledge = available_knowledge
                 
                 self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
-                logging.info("Updated Decision Making Policy")
                 
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
                 
@@ -122,33 +117,28 @@ class Cognitive_System():
                     rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.q_table])
                 
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
-                logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s" % 
-                (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
-                    ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
             else:
                 
                 rows_to_add_to_logger.append([agent.id_num, "Reward", reward.name])
                 if self.mental_map and reward == Reward.nontoxic:
                     self.mental_map.remember_good_place(pos)
-                
-                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
-                
-                self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
-                logging.info("Updated Decision Making Policy")
-                if color_variable != self.last_color_variable or collections.Counter(porposition_list) != collections.Counter(self.last_propositions) or reward != self.last_reward:
+                available_knowledge = self.last_available_knowledge
 
-                    logging.info("Sentences to revise belief base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in generated_propositions])))
+                if color_variable != self.last_color_variable or collections.Counter(porposition_list) != collections.Counter(self.last_propositions) or reward != self.last_reward:
+                    available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
+                    self.last_available_knowledge = available_knowledge
+
+                self.decision_making_system.update_policy(reward, generated_propositions, available_knowledge, currentHealth)
+                if color_variable != self.last_color_variable or collections.Counter(porposition_list) != collections.Counter(self.last_propositions) or reward != self.last_reward:
                     revised_knowledge = self.belief_revision_system.revise_belief_base(generated_propositions, self.long_term_memory.stored_sentences)
                     
                     self.long_term_memory.update(revised_knowledge)
+                
+                    rows_to_add_to_logger.append([agent.id_num, "Belief", "# ".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])])
+                    # TODO What to do here? Eat or Not eat again? Does an decision need to made?
                     
-                    logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
-                
-                rows_to_add_to_logger.append([agent.id_num, "Belief", "# ".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])])
-                # TODO What to do here? Eat or Not eat again? Does an decision need to made?
-                
-                available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
-                rows_to_add_to_logger.append([agent.id_num, "Available Knowledge",  "# ".join([sentence.__str__() for sentence in available_knowledge])])
+                    available_knowledge = self.working_memory_system.retrieve_knowledge(generated_propositions, self.long_term_memory)
+                    self.last_available_knowledge = available_knowledge
 
                 action_chosen = self.decision_making_system.make_decision(generated_propositions, available_knowledge, currentHealth)
                 
@@ -159,9 +149,6 @@ class Cognitive_System():
                     rows_to_add_to_logger.append([agent.id_num, "DecisionMakingSystem", self.decision_making_system.q_table])
                 
                 rows_to_add_to_logger.append([agent.id_num, "Action Chosen", action_chosen])
-                logging.info("Decision: %s, was made for generated proposition: %s and available knowledge: %s:" % 
-                (action_chosen, ",\r\n".join([generated_proposition.__str__() for generated_proposition in generated_propositions]), 
-                    ",\r\n".join([sentence.__str__() for sentence in available_knowledge])))
         # Walk arround random, or better prefere places where you wasnt before and later use spatial knowlege to look for good plants
         else:
             action_chosen = Action.explore
@@ -179,7 +166,6 @@ class Cognitive_System():
         complete_action = None
 
         if self.mental_map is not None and action_chosen.name == Action.explore.name:
-            logging.info("Mental Map is availaible: %s, with current health: %s, looking for best spot" % (self.mental_map.mental_map, currentHealth.value))
             if currentHealth.name == Health.moreThanHalf.name or  currentHealth.name == Health.moreThanThreeQuarter.name:
                 complete_action = CompleteAction(action_chosen)
 
@@ -212,17 +198,13 @@ class Cognitive_System():
     def communicate(self, agent, other_agent):
         if self.communication_system.able_to_communicate == 'True':
             rows_to_add_to_logger = []
-            logging.info("Received communication request for agent %s from agent %s" % (agent.id_num, other_agent.id_num))
             
             # Knowledge of the other agent
             other_agents_available_knowledge = other_agent.cognitive_system.working_memory_system.retrieve_knowledge(None, other_agent.cognitive_system.long_term_memory)
-            logging.info("Available Knowledge of the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])))
             rows_to_add_to_logger.append([agent.id_num, "Commnicate",  ",\r\n".join([sentence.__str__() for sentence in other_agents_available_knowledge])])
             new_information = self.communication_system.filter_sentences(other_agents_available_knowledge)
-            logging.info("Information, used from the other agent: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in new_information])))
             revised_knowledge = self.belief_revision_system.revise_belief_base(new_information, self.long_term_memory.stored_sentences)
             self.long_term_memory.update(revised_knowledge)
-            logging.info("Revised Belief Base: \r\n %s" % ( ",\r\n".join([sentence.__str__() for sentence in self.long_term_memory.stored_sentences])))
 
             if len(rows_to_add_to_logger) > 0:
                 with open('agent.csv', 'a') as csvFile:

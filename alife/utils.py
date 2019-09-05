@@ -35,7 +35,9 @@ def slide_apart(obj_1,obj_2):
         u = v_diff / d
         velocity = u * overlap/1.9 + 1.
         obj_1.pos = obj_1.pos + velocity
+        obj_1.unitv = rotate(obj_1.unitv, 0.1)
         obj_2.pos = obj_2.pos - velocity
+        obj_2.unitv = rotate(obj_2.unitv, -0.1)
 
 def slide_off(s,p,min_dist=5.):
     ''' Object 's' slides off point 'p' acccording to its own velocity 

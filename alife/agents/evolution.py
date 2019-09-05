@@ -127,7 +127,7 @@ class CognitiveEnvolver(Agent):
         self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"),
          kwargs.get("WorkingMemorySystem"), kwargs.get("DecisionMakingSystem"), kwargs.get("MentalMap"),
           kwargs.get("ObservationSystem_Args"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("WorkingMemorySystem_Args"),
-           kwargs.get("DecisionMakingSystem_Args"), kwargs.get("CommunicationSystem_Args"))
+           kwargs.get("DecisionMakingSystem_Args"), kwargs.get("CommunicationSystem_Args"), kwargs.get("yml_file"))
         
 
     def act(self, obs, nearby_objects, is_day_time, reward, world, pos, currentHealth, done=False):

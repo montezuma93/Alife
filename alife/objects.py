@@ -44,6 +44,7 @@ action_space = BugSpace(array([-pi/4., -5.]), array([pi/4.,10.]))
 # Load game constants
 
 import yaml
+yaml.warnings({'YAMLLoadWarning': False})
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
 
@@ -216,7 +217,7 @@ class Creature(Thing):
         A Creature: Something that moves (i.e., an agent).
     '''
 
-    def __init__(self,pos,dna=None,energy=350.0,ID=ID_ANIMAL):
+    def __init__(self,pos,dna=None,energy=350.0,ID=ID_ANIMAL, yml_file= None):
         pygame.sprite.Sprite.__init__(self, self.containers)
         Thing.__init__(self, pos, mass = energy, ID = ID)
         self.images = build_image_bank(self.image)   # this is a moving sprite; load images for each angle
@@ -398,7 +399,7 @@ class Creature(Thing):
                     if go_to[0] == "Location":
                         # is same grid?
                         dist = math.sqrt((self.pos[0] - action.location[0])**2 + (self.pos[1] - action.location[1])**2)
-                        if dist < 100:
+                        if dist < 50:
                             action.mental_map.remove((action.location[0], action.location[1]))
                             angle = 0
                             speed = 0.5

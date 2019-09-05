@@ -24,15 +24,14 @@ if len(sys.argv) > 1:
 
 if len(sys.argv) > 2:
     agent_string = sys.argv[2]
-    with open('conf.yml') as file:
+    with open(test_run_name + '.yml') as file:
         config_file = yaml.load(file)
         bugs = config_file['bugs']
         bugs[3] = sys.argv[2]
         log_file = config_file['log_file']
         log_file['name'] = test_run_name + ".csv"
-        with open('conf.yml', "w") as file:
+        with open(test_run_name+'.yml', "w") as file:
             yaml.dump(config_file, file)
 
-print(agent_string)
 pygame.init()
 world = World(map_file,init_sprites,test_run_name, agent_string)

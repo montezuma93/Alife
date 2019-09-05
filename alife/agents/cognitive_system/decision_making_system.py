@@ -7,6 +7,7 @@ import operator
 import itertools
 from .truths.truthtable import *
 import random
+import collections
 # See: Towards agents with human-like decisions under uncertainty
 class HumanLikeDecisionMakingUnderUncertaintySystem:
 
@@ -15,7 +16,8 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         self.ambiguity_aversion = int(decision_making_system_args[1])
         self.evidence_interpretation = decision_making_system_args[2]
         self.closed_world_assumption = decision_making_system_args[3]
-
+        self.last_observations = None
+        self.last_available_sentences = None
         self.use_recent_health = decision_making_system_args[4] 
 
         self.epsilon = 0.1
@@ -58,28 +60,30 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
 
     # Observation = [Proposition,...], [...]
     def make_decision(self, observations, available_sentences, recent_health):
-        # Utility eat = Eat Non Toxic - Eat toxic , needs to be greater 1 by design
-        if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
-            self.adjust_weightning_table_for_evidence(observations, available_sentences)
-            for key, value in self.weightning_table.items():
-                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
-                for key2, value2 in value.items():
-                    self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
-        elif self.evidence_interpretation == EvidenceInterpretation.probability.value:
-            self.adjust_weightning_table_for_probability(observations, available_sentences)
-            for key, value in self.weightning_table.items():
-                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
-                for key2, value2 in value.items():
-                    self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
-        elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
-            self.adjust_weightning_table_for_ranking(observations, available_sentences)
-            for key, value in self.weightning_table.items():
-                for key2, value2 in value.items():
-                    self.weightning_table[key][key2] =  1 / self.weightning_table[key][key2]
-            for key, value in self.weightning_table.items():
-                total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
-                for key2, value2 in value.items():
-                    self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
+
+        if collections.Counter(observations) != collections.Counter(self.last_observations) or collections.Counter(available_sentences) != collections.Counter(self.last_available_sentences):
+            # Utility eat = Eat Non Toxic - Eat toxic , needs to be greater 1 by design
+            if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
+                self.adjust_weightning_table_for_evidence(observations, available_sentences)
+                for key, value in self.weightning_table.items():
+                    total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
+                    for key2, value2 in value.items():
+                        self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
+            elif self.evidence_interpretation == EvidenceInterpretation.probability.value:
+                self.adjust_weightning_table_for_probability(observations, available_sentences)
+                for key, value in self.weightning_table.items():
+                    total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
+                    for key2, value2 in value.items():
+                        self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
+            elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
+                self.adjust_weightning_table_for_ranking(observations, available_sentences)
+                for key, value in self.weightning_table.items():
+                    for key2, value2 in value.items():
+                        self.weightning_table[key][key2] =  1 / self.weightning_table[key][key2]
+                for key, value in self.weightning_table.items():
+                    total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
+                    for key2, value2 in value.items():
+                        self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
         # Calculate entropy
         for key, value in self.weightning_table.items():
             if self.weightning_table[key]["true"] == 0 or self.weightning_table[key]["false"] == 0:
@@ -103,17 +107,19 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
             self.solution_table[key] = utility * weightning
 
         decision_made = self.solution_to_action_mapping.get(max(self.solution_table.items(), key=operator.itemgetter(1))[0])
+        self.last_observations = observations
+        self.last_available_sentences = available_sentences
         return decision_made
 
     def adjust_weightning_table_for_evidence(self, observations, available_sentences):
         evidence_for_non_toxic= 0
         evidence_for_toxic= 0
+        
         for observation in observations:
             non_toxic_observation = self.create_truth_table_for_new_sentence(observation, "!X")
             toxic_observation = self.create_truth_table_for_new_sentence(observation, "X")
             evidence_for_non_toxic = evidence_for_non_toxic + self.calculate_b_m_rank(non_toxic_observation, available_sentences)
             evidence_for_toxic = evidence_for_toxic + self.calculate_b_m_rank(toxic_observation, available_sentences)
-
         self.weightning_table["eat"]["true"] = evidence_for_non_toxic if evidence_for_non_toxic > 0 else self.epsilon
         self.weightning_table["eat"]["false"] = evidence_for_toxic if evidence_for_toxic > 0 else self.epsilon
 
