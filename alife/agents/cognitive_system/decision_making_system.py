@@ -78,11 +78,8 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
             elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
                 self.adjust_weightning_table_for_ranking(observations, available_sentences)
                 for key, value in self.weightning_table.items():
-                    for key2, value2 in value.items():
-                        self.weightning_table[key][key2] =  1 / self.weightning_table[key][key2]
-                for key, value in self.weightning_table.items():
                     total_evidence = self.weightning_table[key]["true"] +self.weightning_table[key]["false"]
-                    for key2, value2 in value.items():
+                    for key2, value2 in value.items(): 
                         self.weightning_table[key][key2] = self.weightning_table[key][key2] / total_evidence
         # Calculate entropy
         for key, value in self.weightning_table.items():
@@ -134,14 +131,14 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
                  and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0]) 
                  and sentence.propositions[0][1] == Reward.nontoxic):
                     sentence_of_observation = sentence
-            evidence_for_non_toxic = evidence_for_non_toxic + sentence_of_observation.evidence if sentence_of_observation is not None else evidence_for_non_toxic
+            evidence_for_non_toxic = evidence_for_non_toxic + 1/max(sentence_of_observation.evidence, self.epsilon) if sentence_of_observation is not None else evidence_for_non_toxic
             sentence_of_observation = None
             for sentence in available_sentences:
                 if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation.propositions[0][0]) 
                  and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0])
                  and sentence.propositions[0][1] == Reward.toxic):
                     sentence_of_observation = sentence
-            evidence_for_toxic = evidence_for_toxic + sentence_of_observation.evidence if sentence_of_observation is not None else evidence_for_toxic
+            evidence_for_toxic = evidence_for_toxic + 1/max(sentence_of_observation.evidence,self.epsilon) if sentence_of_observation is not None else evidence_for_toxic
         self.weightning_table["eat"]["true"] = evidence_for_non_toxic if evidence_for_non_toxic > 0 else self.epsilon
         self.weightning_table["eat"]["false"] = evidence_for_toxic if evidence_for_toxic > 0 else self.epsilon
 
