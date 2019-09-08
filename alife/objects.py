@@ -77,7 +77,7 @@ class Thing(pygame.sprite.DirtySprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.ID = ID
         self.radius = 3 + int(math.sqrt(mass/math.pi))
-        self.energy = mass*4
+        self.energy = mass*3
         self.pos = pos
         self.is_colliding = True
         self.rect, self.image = build_image(self.pos,self.radius,self.ID)
@@ -160,7 +160,6 @@ class Thing(pygame.sprite.DirtySprite):
         elif self.ID == ID_ROCK:
             # I am a rock
             creature.energy = creature.energy - creature.speed * BOUNCE_DAMAGE         # Ouch!
-
         # Bump !
         # Does it need to be moved?
         # self.pos = self.pos + (creature.unitv * creature.speed)
@@ -217,7 +216,7 @@ class Creature(Thing):
         A Creature: Something that moves (i.e., an agent).
     '''
 
-    def __init__(self,pos,dna=None,energy=350.0,ID=ID_ANIMAL, yml_file= None):
+    def __init__(self,pos,dna=None,energy=500.0,ID=ID_ANIMAL, yml_file= None):
         pygame.sprite.Sprite.__init__(self, self.containers)
         Thing.__init__(self, pos, mass = energy, ID = ID)
         self.images = build_image_bank(self.image)   # this is a moving sprite; load images for each angle
@@ -381,21 +380,21 @@ class Creature(Thing):
         elif action.intension.name == Action.explore.name:
             if any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = 0.2
-                speed = 0.5
+                speed = 0.75
             # Turn to the right
             elif any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = 0.1
-                speed = 0.5
+                speed = 0.75
             # Turn to the left
             elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]):
                 angle = -0.1
-                speed = 0.5
+                speed = 0.75
             elif not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[1]]) and not any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[2]]) and any([str(nearby_object)[0] == "3" for nearby_object in nearby_objects[0]]):
                 angle = 0
-                speed = 1
+                speed = 1.5
             else:
                 if action.location is not None:
-                    go_to = choices(population=["Random", "Location"], weights=[0.1, 0.9], k=1)
+                    go_to = choices(population=["Random", "Location"], weights=[0.25, 0.75], k=1)
                     if go_to[0] == "Location":
                         # is same grid?
                         dist = math.sqrt((self.pos[0] - action.location[0])**2 + (self.pos[1] - action.location[1])**2)

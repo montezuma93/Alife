@@ -3,9 +3,9 @@ bugs:
   2: alife.agents.evolution/SimpleEvolver/{'H':-10}
   3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'ConditionalBeliefRevision',
     'WorkingMemorySystem':'WorkingMemoryWithEvidence','DecisionMakingSystem':'HumanLikeDecisionMakingUnderUncertaintySystem',
-    'MentalMap':'True','ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'],
-    'WorkingMemorySystem_Args':['RANKING',100], 'DecisionMakingSystem_Args':[0.01,
-    0.9, 'RANKING', 'True', 'True', 5, 14,14, 15,7, 7, 7, 7],'CommunicationSystem_Args':['True',
+    'MentalMap':'True','ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['True'],
+    'WorkingMemorySystem_Args':['RANKING',100], 'DecisionMakingSystem_Args':[0.2,
+    0.5, 'RANKING', 'True', 'True', 5,  14,14,15,7, 7, 7, 7],'CommunicationSystem_Args':['True',
     10, 'RANKING']}
 log_file:
   name: agents.csv

@@ -220,7 +220,8 @@ class World:
         ### Add plants and rocks and adjust params for Things and Livings based on random
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
         if test_run_name is not None:
-            self.create_agents(agents, 10, agent_string)
+            self.agents_amount = 10
+            self.create_agents(agents,  self.agents_amount, agent_string)
             ### Write configuration to file
             f = open(test_run_name + ".txt","a")
             x = PrettyTable()
@@ -231,6 +232,17 @@ class World:
                 x.add_row(row_to_add)
             f.write(x.get_string())
             f.write("\r\n")
+
+            x = PrettyTable()
+            header = ["Plant Type"] + list(self.available_proposition_table_list["3"].keys()) 
+            x.field_names = header
+            for key, row in self.available_proposition_table_list.items():
+                row_to_add = [key] + list(row.values())     
+                x.add_row(row_to_add)
+            f.write(x.get_string())
+            f.write("\r\n")
+
+            
             f.close()
 
             header = ["AgentID", "Operation", "Result"]
@@ -249,6 +261,17 @@ class World:
                 x.add_row(row_to_add)
             f.write(x.get_string())
             f.write("\r\n")
+
+
+            x = PrettyTable()
+            header = ["Plant Type"] + list(self.available_proposition_table_list["3"].keys()) 
+            x.field_names = header
+            for key, row in self.available_proposition_table_list.items():
+                row_to_add = [key] + list(row.values())     
+                x.add_row(row_to_add)
+            f.write(x.get_string())
+            f.write("\r\n")
+
             f.close()
 
             header = ["AgentID", "Operation", "Result"]
@@ -423,7 +446,7 @@ class World:
             if test_run_name is not None:
                 if len(self.creatures) == 0 or step > 20000:
                     self.create_results(test_run_name, self.creatures, step)              
-                    sys.exit()
+                    sys.exit()    
 
             if GRAPHICS_ON:
 
@@ -466,21 +489,40 @@ class World:
                     #pygame.time.delay(self.FPS)
 
     def create_things_and_creatures(self, max_plant_size, agents):
+        found_combination = []
         positions_used_plants = []
         for thing_type in (ID_PLANT, ID_PLANT_ORANGE, ID_PLANT_PURPLE, ID_PLANT_BLUE):
-            for i in range(random.randint(5,10)):
+            for i in range(random.randint(2,8)):
                 random_position = self.random_position(positions_used_plants = positions_used_plants)
                 if random_position is not None:
-                    positions_used_plants.append(random_position)
+                    positions_used_plants.append((thing_type, random_position))
+                    found_combination.append([thing_type])
                     Thing(random_position, mass=350, ID=thing_type)
                 #Add rocks and tree trunks
-        for thing_type in (ID_ROCK, ID_TREE_TRUNK):
-            positions_used_objects = []
-            for i in range(random.randint(10,25)):
-                random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
-                if random_position is not None:
-                    positions_used_objects.append(random_position)
-                    Thing(random_position, mass=350, ID=thing_type)
+
+        thing_type = ID_ROCK
+        positions_used_objects = []
+        for i in range(random.randint(7,25)):
+            random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
+            if random_position is not None:
+                found_combination[random_position[0]].append(thing_type)
+                positions_used_objects.append(random_position[1])
+                Thing(random_position[1], mass=350, ID=thing_type)
+        thing_type = ID_TREE_TRUNK
+        positions_used_objects = []
+        for i in range(random.randint(10,25)):
+            random_position = self.random_position(positions_used_plants = positions_used_plants, positions_used_objects = positions_used_objects)
+            if random_position is not None:
+                found_combination[random_position[0]].append(thing_type)
+                positions_used_objects.append(random_position[1])
+                Thing(random_position[1], mass=350, ID=thing_type)
+        
+        possible_combinations = []
+        for combination in found_combination:
+            if combination not in possible_combinations:
+                possible_combinations.append(combination)
+        
+        self.create_availableproposition_table(possible_combinations)
 
         for r in self.allSprites:
             self.add_to_register(r)
@@ -513,22 +555,55 @@ class World:
                 'night_': random.choice(plants_toxicity)
             }      
 
+    def create_availableproposition_table(self, available_propositions):
+        self.available_proposition_table_list = {}
+        for plant_id in PLANT_IDS:
+            self.available_proposition_table_list[str(plant_id)] = {
+                'day_1': 0,
+                'day_2': 0,
+                'day_1_2': 0,
+                'day_': 0,
+                'night_1': 0,
+                'night_2': 0,
+                'night_1_2': 0,
+                'night_': 0
+            }   
+
+        for available_proposition in available_propositions:
+            if len(available_proposition) ==1:
+                self.available_proposition_table_list[str(available_proposition[0])]['day_'] = 1
+                self.available_proposition_table_list[str(available_proposition[0])]['night_'] = 1
+            elif len(available_proposition) ==2:
+                for proposition in available_proposition:
+                    if proposition == 1:
+                        self.available_proposition_table_list[str(available_proposition[0])]['day_1'] = 1
+                        self.available_proposition_table_list[str(available_proposition[0])]['night_1'] = 1
+                    if proposition == 2:
+                        self.available_proposition_table_list[str(available_proposition[0])]['day_2'] = 1
+                        self.available_proposition_table_list[str(available_proposition[0])]['night_2'] = 1
+            else:           
+                self.available_proposition_table_list[str(available_proposition[0])]['day_1_2'] = 1
+                self.available_proposition_table_list[str(available_proposition[0])]['night_1_2'] = 1
+
+
     def random_position(self, on_empty=False, positions_used_plants = [], positions_used_objects = None):
         ''' Find a random position somewhere on the screen over land tiles
             (if specified -- only on an empty tile) '''
         # For adding things like rock and tree, Want them close to a plant
         if positions_used_objects is not None:
             distance_is_wrong = False
-            point = positions_used_plants[np.random.randint(0 , len(positions_used_plants)-1)]
+            which_to_use = np.random.randint(0 , len(positions_used_plants)-1)
+            point = positions_used_plants[which_to_use][1]
+            plant_type_use = positions_used_plants[which_to_use][0] 
             calculated_point_x = np.random.uniform(point[0] -20 , point[0] +20)
             calculated_point_y = np.random.uniform(point[1] -20 , point[1] +20)
             distance_to_plant = calculate_distance(calculated_point_x, calculated_point_y, point[0], point[1])
-            for point_of_object in positions_used_objects:
+            for point_of_object  in positions_used_objects:
                 distance_to_object = calculate_distance(calculated_point_x, calculated_point_y, point_of_object[0], point_of_object[1])     
                 if distance_to_object < 50 or distance_to_plant > 25 or distance_to_plant < 10:
                     distance_is_wrong = True
             if not distance_is_wrong:
-                return array([calculated_point_x, calculated_point_y])
+                return (which_to_use, array([calculated_point_x, calculated_point_y]))
         # For all other case, for adding plants
         else:
             j_list = list(range(self.terrain.shape[0]))
@@ -541,8 +616,8 @@ class World:
                         calculated_position = self.grid2pos((k,j)) + random.rand(2) * TILE_SIZE - TILE_SIZE*0.5
                         distance_is_wrong = False
                         for point in positions_used_plants:
-                            distance = calculate_distance(point[0], point[1], calculated_position[0], calculated_position[1])
-                            if distance < 200:
+                            distance = calculate_distance(point[1][0], point[1][1], calculated_position[0], calculated_position[1])
+                            if distance < 250:
                                 distance_is_wrong = True
                         if not distance_is_wrong:
                             return calculated_position
@@ -766,7 +841,7 @@ class World:
         new_created = False
         last_row = 0
         if not os.path.isfile('./' + test_run_name + '-results.csv'):
-            header = ["RunId" ,"ResultType", "AmountOfBugs", "Step"]
+            header = ["RunId" ,"Step", "Agent", "ResultType", "Result"]
             csv_file = open(test_run_name + "-results.csv", "w")
             writer = csv.DictWriter(csv_file, fieldnames=header,delimiter =";",lineterminator='\n',)
             writer.writeheader()
@@ -781,101 +856,151 @@ class World:
             scraped.close
         next_run = str(int(last_row) + 1)
         row_to_append = []
+        average_precission_X = 0
+        average_precission_notX = 0
+        average_recall_X = 0
+        average_recall_notX = 0
+        average_positive_reward = 0
+        average_negative_reward = 0
+        average_positive_negative_reward_ratio = 0
+
         for agent, value in agents.items():
-            row_to_append.append([next_run, "RewardPos", agent, value["nontoxic"]])
-            row_to_append.append([next_run, "RewardNeg", agent, value["toxic"]])
-            row_to_append.append([next_run, "LastBelief", agent, value["Belief"]])
+            average_positive_reward =average_positive_reward + value["nontoxic"]
+            average_negative_reward =average_negative_reward + value["toxic"]
+
+            row_to_append.append([next_run, step, agent, "RewardPos", value["nontoxic"]])
+            row_to_append.append([next_run, step, agent, "RewardNeg",  value["toxic"]])
+
             belief = value["Belief"].split("#")
-            amount_of_right = 0
-            amount_of_wrong = 0
-            for color in self.proposition_table_list:
-                for entry, value in self.proposition_table_list[color].items():
-                    needs_to_contain = []
-                    not_needs_to_contain = []
-                    if color == "3":
-                        needs_to_contain.append("GREEN") 
-                    elif color == "31":
-                        needs_to_contain.append("ORANGE") 
-                    elif color == "32":
-                        needs_to_contain.append("PURPLE") 
-                    elif color == "33":
-                        needs_to_contain.append("BLUE") 
-                    if "1" in entry:
-                        needs_to_contain.append("ROCK")
-                    else:
-                        not_needs_to_contain.append("ROCK")
-                    if "2" in entry:
-                        needs_to_contain.append("TREE")
-                    else:
-                        not_needs_to_contain.append("TREE")
-                    if "day" in entry:
-                        needs_to_contain.append("DAY")
-                        not_needs_to_contain.append("!DAY")
-                    if "night" in entry:
-                        needs_to_contain.append("!DAY")
-                    evidence_for_toxic = None
-                    evidence_for_non_toxic = None
-                    if self.evidence_interpreation == "EVIDENCE":
-                        evidence_for_non_toxic = 0
-                        evidence_for_toxic = 0
-                    for sentence in belief:
-                        if self.evidence_interpreation != "EVIDENCE":
-                            if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
-                                if "nontoxic" in sentence:
-                                    splited = sentence.split("evidence: ")
-                                    evidence_for_non_toxic = splited[1]
-                                    evidence_for_non_toxic = float(evidence_for_non_toxic)
-                                else:
-                                    splited = sentence.split("evidence: ")
-                                    evidence_for_toxic = splited[1]
-                                    evidence_for_toxic = float(evidence_for_toxic)
+            amount_of_true_negatives = 0
+            amount_of_true_positives = 0
+            amount_of_false_positives = 0
+            amount_of_false_negatives = 0
+            
+            amount_of_available_propositions = 0
+            amount_of_positives = 0
+            amount_of_negatives = 0
+            for color in self.available_proposition_table_list:
+                for entry, available in self.available_proposition_table_list[color].items():
+                    if available == 1:
+                        amount_of_available_propositions = amount_of_available_propositions + 1
+                        value = self.proposition_table_list[color][entry]
+                        needs_to_contain = []
+                        not_needs_to_contain = []
+                        if color == "3":
+                            needs_to_contain.append("GREEN") 
+                        elif color == "31":
+                            needs_to_contain.append("ORANGE") 
+                        elif color == "32":
+                            needs_to_contain.append("PURPLE") 
+                        elif color == "33":
+                            needs_to_contain.append("BLUE") 
+                        if "1" in entry:
+                            needs_to_contain.append("ROCK")
                         else:
-                            or_sentences = re.compile("\sv\s").split(sentence)
-                            for or_sentence in or_sentences:
+                            not_needs_to_contain.append("ROCK")
+                        if "2" in entry:
+                            needs_to_contain.append("TREE")
+                        else:
+                            not_needs_to_contain.append("TREE")
+                        if "day" in entry:
+                            needs_to_contain.append("DAY")
+                            not_needs_to_contain.append("!DAY")
+                        if "night" in entry:
+                            needs_to_contain.append("!DAY")
+                        evidence_for_toxic = None
+                        evidence_for_non_toxic = None
+                        if self.evidence_interpreation == "EVIDENCE":
+                            evidence_for_non_toxic = 0
+                            evidence_for_toxic = 0
+                        for sentence in belief:
+                            if self.evidence_interpreation != "EVIDENCE":
                                 if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
-                                    if "nontoxic" in or_sentence:
+                                    if "nontoxic" in sentence:
                                         splited = sentence.split("evidence: ")
-                                        evidence_for_non_toxic_part = splited[1]
-                                        evidence_for_non_toxic = evidence_for_non_toxic + float(evidence_for_non_toxic_part)
+                                        evidence_for_non_toxic = splited[1]
+                                        evidence_for_non_toxic = float(evidence_for_non_toxic)
                                     else:
                                         splited = sentence.split("evidence: ")
-                                        evidence_for_toxic_part = splited[1]
-                                        evidence_for_toxic = evidence_for_toxic+ float(evidence_for_toxic_part)
+                                        evidence_for_toxic = splited[1]
+                                        evidence_for_toxic = float(evidence_for_toxic)
+                            else:
+                                or_sentences = re.compile("\sv\s").split(sentence)
+                                for or_sentence in or_sentences:
+                                    if all([x in sentence for x in needs_to_contain]) and all([x not in sentence for x in not_needs_to_contain]):
+                                        if "nontoxic" in or_sentence:
+                                            splited = sentence.split("evidence: ")
+                                            evidence_for_non_toxic_part = splited[1]
+                                            evidence_for_non_toxic = evidence_for_non_toxic + float(evidence_for_non_toxic_part)
+                                        else:
+                                            splited = sentence.split("evidence: ")
+                                            evidence_for_toxic_part = splited[1]
+                                            evidence_for_toxic = evidence_for_toxic+ float(evidence_for_toxic_part)
 
-                    if value == "X":
-                        if self.evidence_interpreation == "RANKING":
-                            if evidence_for_toxic < evidence_for_non_toxic:
-                                amount_of_right = amount_of_right + 1
-                            elif evidence_for_toxic > evidence_for_non_toxic:
-                                amount_of_wrong = amount_of_wrong + 1
-                        else:
-                            evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
-                            evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
-                            if evidence_for_toxic > evidence_for_non_toxic:
-                                amount_of_right = amount_of_right + 1
-                            elif evidence_for_toxic < evidence_for_non_toxic:
-                                amount_of_wrong = amount_of_wrong + 1
-                    elif value == "!X":
-                        if self.evidence_interpreation == "RANKING":
-                            if evidence_for_toxic > evidence_for_non_toxic:
-                                amount_of_right = amount_of_right + 1
-                            elif evidence_for_toxic < evidence_for_non_toxic:
-                                amount_of_wrong = amount_of_wrong + 1
-                        else:
-                            evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
-                            evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
-                            if evidence_for_toxic < evidence_for_non_toxic:
-                                amount_of_right = amount_of_right + 1
-                            elif evidence_for_toxic > evidence_for_non_toxic:
-                                amount_of_wrong = amount_of_wrong + 1
-            row_to_append.append([next_run, "AmountOfRightProposition", agent, amount_of_right])
-            row_to_append.append([next_run, "AmountOfWrongProposition", agent, amount_of_wrong])
-                    
+                        if value == "X":
+                            amount_of_positives = amount_of_positives +1
+                            if self.evidence_interpreation == "RANKING":
+                                if evidence_for_toxic < evidence_for_non_toxic:
+                                    amount_of_true_positives = amount_of_true_positives + 1
+                                elif evidence_for_toxic > evidence_for_non_toxic:
+                                    amount_of_false_positives = amount_of_false_positives + 1
+                            else:
+                                evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
+                                evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
+                                if evidence_for_toxic > evidence_for_non_toxic:
+                                    amount_of_true_positives = amount_of_true_positives + 1
+                                elif evidence_for_toxic < evidence_for_non_toxic:
+                                    amount_of_false_positives = amount_of_false_positives + 1
+                        elif value == "!X":
+                            amount_of_negatives = amount_of_negatives +1
+                            if self.evidence_interpreation == "RANKING":
+                                if evidence_for_toxic > evidence_for_non_toxic:
+                                    amount_of_true_negatives = amount_of_true_negatives + 1
+                                elif evidence_for_toxic < evidence_for_non_toxic:
+                                    amount_of_false_negatives = amount_of_false_negatives + 1
+                            else:
+                                evidence_for_toxic = evidence_for_toxic if evidence_for_toxic is not None else 0
+                                evidence_for_non_toxic = evidence_for_non_toxic if evidence_for_non_toxic is not None else 0
+                                if evidence_for_toxic < evidence_for_non_toxic:
+                                    amount_of_true_negatives = amount_of_true_negatives + 1
+                                elif evidence_for_toxic > evidence_for_non_toxic:
+                                    amount_of_false_negatives = amount_of_false_negatives + 1
+            
+            row_to_append.append([next_run, step, agent, "AmountOfProposition",  amount_of_available_propositions])
+            row_to_append.append([next_run, step, agent, "AmountOfPositivesProposition",  amount_of_positives])
+            row_to_append.append([next_run, step, agent, "AmountOfNegativesProposition",  amount_of_negatives])
+
+            row_to_append.append([next_run, step, agent, "AmountOfRightPositivesProposition",  amount_of_true_positives])
+            row_to_append.append([next_run, step, agent, "AmountOfWrongPositivesProposition", amount_of_false_positives])
+            row_to_append.append([next_run, step, agent, "AmountOfRightNegativesProposition", amount_of_true_negatives])
+            row_to_append.append([next_run,step, agent, "AmountOfWrongNegativesProposition", amount_of_false_negatives])
+
+            precission_X = amount_of_true_positives/(amount_of_true_positives+amount_of_false_positives) if amount_of_true_positives != 0 or amount_of_false_positives != 0 else 0
+            average_precission_X = average_precission_X + precission_X
+            precission_notX =  amount_of_true_negatives/(amount_of_true_negatives+amount_of_false_negatives) if amount_of_true_negatives != 0 or amount_of_false_negatives != 0 else 0
+            average_precission_notX = average_precission_notX + precission_notX
+            recall_X = amount_of_true_positives/(amount_of_true_positives+amount_of_false_negatives) if amount_of_true_positives != 0  or amount_of_false_negatives != 0 else 0
+            average_recall_X = average_recall_X + recall_X
+            recall_notX = amount_of_true_negatives/(amount_of_true_negatives+amount_of_false_positives) if amount_of_true_negatives != 0 or  amount_of_false_positives != 0 else 0
+            average_recall_notX = average_recall_notX + recall_notX
+
+            row_to_append.append([next_run, step, agent, "Precission_X",  precission_X])
+            row_to_append.append([next_run, step, agent, "Precission_!X",precission_notX])
+            row_to_append.append([next_run, step, agent, "Recall_X",recall_X])
+            row_to_append.append([next_run,step, agent, "Recall_!X", recall_notX])
 
 
+        row_to_append.append([next_run, step, "All", "AveragePositiveReward",  average_positive_reward/len(agents)])
+        row_to_append.append([next_run, step, "All", "AverageNegativeReward",  average_negative_reward/len(agents)])
 
 
+        row_to_append.append([next_run, step, "All", "Precission_X",  average_precission_X/len(agents)])
+        row_to_append.append([next_run, step, "All", "Precission_!X",average_precission_notX/len(agents)])
+        row_to_append.append([next_run, step, "All", "Recall_X",average_recall_X/len(agents)])
+        row_to_append.append([next_run,step, "All", "Recall_!X", average_recall_notX/len(agents)])
 
+        percentage_of_agents_survive = len(creatures) / self.agents_amount
+        row_to_append.append([next_run, step, "All", "PercentageSurvive",  percentage_of_agents_survive])
 
         with open(test_run_name + '-results.csv', 'a', newline='') as csvFile:
             writer = csv.writer(csvFile, delimiter =";")

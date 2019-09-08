@@ -63,6 +63,7 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
 
         if collections.Counter(observations) != collections.Counter(self.last_observations) or collections.Counter(available_sentences) != collections.Counter(self.last_available_sentences):
             # Utility eat = Eat Non Toxic - Eat toxic , needs to be greater 1 by design
+           
             if self.evidence_interpretation == EvidenceInterpretation.evidence.value:
                 self.adjust_weightning_table_for_evidence(observations, available_sentences)
                 for key, value in self.weightning_table.items():
@@ -125,6 +126,9 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         evidence_for_non_toxic= 0
         evidence_for_toxic= 0
         for observation in observations:
+            if self.closed_world_assumption:
+                if not any([isinstance(observation_proposition, type(NightProposition())) for observation_proposition in observation.propositions[0][0]]) and not any([isinstance(observation_proposition, type(DayProposition())) for observation_proposition in observation.propositions[0][0]]):
+                    observation.propositions[0][0].append(NightProposition())
             sentence_of_observation = None
             for sentence in available_sentences:
                 if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation.propositions[0][0])
@@ -146,6 +150,9 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         evidence_for_non_toxic= 0
         evidence_for_toxic= 0
         for observation in observations:
+            if self.closed_world_assumption:
+                if not any([isinstance(observation_proposition, type(NightProposition())) for observation_proposition in observation.propositions[0][0]]) and not any([isinstance(observation_proposition, type(DayProposition())) for observation_proposition in observation.propositions[0][0]]):
+                    observation.propositions[0][0].append(NightProposition())
             sentence_of_observation = None
             for sentence in available_sentences:
                 if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation.propositions[0][0])

@@ -4,8 +4,8 @@ bugs:
   3: alife.agents.evolution/CognitiveEnvolver/{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision',
     'WorkingMemorySystem':'WorkingMemoryWithEvidence','DecisionMakingSystem':'HumanLikeDecisionMakingUnderUncertaintySystem',
     'MentalMap':'True','ObservationSystem_Args':[], 'BeliefRevisionSystem_Args':['False'],
-    'WorkingMemorySystem_Args':['EVIDENCE',100], 'DecisionMakingSystem_Args':[0.01,
-    0.9, 'EVIDENCE', 'True', 'True', 5, 14,14,15,7, 7, 7, 7],'CommunicationSystem_Args':['False',
-    10, 'EVIDENCE'],'yml_file':'Config1.yml'}
+    'WorkingMemorySystem_Args':['EVIDENCE',66], 'DecisionMakingSystem_Args':[0.2,
+    0.5, 'EVIDENCE', 'True', 'True', 5,  14,14,15,7, 7, 7, 7],'CommunicationSystem_Args':['False',
+    10, 'EVIDENCE'],'yml_file':'Config4.yml'}
 log_file:
-  name: Config1.csv
+  name: Config4.csv
