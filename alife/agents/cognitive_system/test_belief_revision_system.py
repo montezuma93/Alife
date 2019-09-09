@@ -249,7 +249,24 @@ class BeliefRevisionTest(TestCase):
         another_revised_belief_base = self.belief_revision_system.revise_belief_base([another_sentence], revised_belief_base)
 
     ############################### PROBABILITY BELIEF REVISION ##############################################
+    
+    def test_probability_belief_revision_closed_world_assumption_and_not_uses_occams_razor_first_new_sentence(self):
+        self.belief_revision_system = ProbabilityBeliefRevision([False, False, 0])
 
+        sentence = Sentence([([ColorGreen(), NightProposition(), NextToRock() ], Reward.toxic)], 1)
+        sentence_2 = Sentence([([ColorGreen(), NightProposition(), NextToTreeTrunk()],  Reward.toxic)], 1)
+        old_belief_base = []
+
+        revised_belief_base = self.belief_revision_system.revise_belief_base([sentence, sentence_2], old_belief_base)
+
+        self.assertEqual(2, len(revised_belief_base))
+        self.assertEqual(0.5, revised_belief_base[0].evidence)
+        sentence = Sentence([([ColorGreen(), NextToRock(), NightProposition(), ], Reward.toxic)], 1)
+        print(self.belief_revision_system.observed_data)
+        revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], revised_belief_base)
+        #self.assertEqual(1, len(revised_belief_base))
+        #self.assertEqual(2/3, revised_belief_base[0].evidence)
+    '''
     def test_probability_belief_revision_without_closed_world_assumption_first_new_sentence(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, False, 10])
 
@@ -271,15 +288,6 @@ class BeliefRevisionTest(TestCase):
         self.assertEqual(1, len(revised_belief_base))
         self.assertEqual(2/3, revised_belief_base[0].evidence)
 
-    def test_probability_belief_revision_closed_world_assumption_and_uses_occams_razor_first_new_sentence(self):
-        self.belief_revision_system = ProbabilityBeliefRevision([True, True, 10])
-
-        sentence = Sentence([([DayProposition(), ColorGreen()], Reward.toxic)], 1)
-        old_belief_base = []
-
-        revised_belief_base = self.belief_revision_system.revise_belief_base([sentence], old_belief_base)
-        self.assertEqual(1, len(revised_belief_base))
-        self.assertEqual(2/3, revised_belief_base[0].evidence)
 
     def test_probability_belief_revision_without_closed_world_assumption_and_uses_occams_razor_first_new_sentence(self):
         self.belief_revision_system = ProbabilityBeliefRevision([False, True, 10])
@@ -394,7 +402,7 @@ class BeliefRevisionTest(TestCase):
         self.assertAlmostEqual(0.173, another_revised_belief_base[1].evidence, 2)
         self.assertAlmostEqual(0.24, another_revised_belief_base[2].evidence, 2)
         self.assertAlmostEqual(0.28, another_revised_belief_base[3].evidence, 2)
-
+    '''
  ############################### CONDITIONAL BELIEF REVISION ##############################################
 
     def test_create_possible_worlds_while_init(self):

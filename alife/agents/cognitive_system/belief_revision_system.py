@@ -223,17 +223,17 @@ class ProbabilityBeliefRevision(BeliefRevisionSystem):
         revised_belief_base = []
         for sentence_to_add in new_sentences:
             new_observed_data_key = self.add_to_observed_data(sentence_to_add)
-            
-            for sentence in belief_base:
-                sentence_key = self.create_sentence_key(sentence)
-                posterior = self.calculate_posterior(sentence_key)
-                sentence.evidence = posterior
-                revised_belief_base.append(sentence)
-            
-            if len(revised_belief_base) < len(self.observed_data.keys()):
-                posterior_of_new_sentence = self.calculate_posterior(new_observed_data_key)
-                sentence_to_add.evidence = posterior_of_new_sentence
-                revised_belief_base.append(sentence_to_add)
+
+        for sentence in belief_base:
+            sentence_key = self.create_sentence_key(sentence)
+            posterior = self.calculate_posterior(sentence_key)
+            sentence.evidence = posterior
+            revised_belief_base.append(sentence)
+        for sentence_to_add in new_sentences:
+            new_observed_data_key = self.create_sentence_key(sentence_to_add)
+            posterior_of_new_sentence = self.calculate_posterior(new_observed_data_key)
+            sentence_to_add.evidence = posterior_of_new_sentence
+            revised_belief_base.append(sentence_to_add)
         return revised_belief_base
 
     def add_to_observed_data(self, new_sentence):

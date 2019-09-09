@@ -150,20 +150,22 @@ class HumanLikeDecisionMakingUnderUncertaintySystem:
         evidence_for_non_toxic= 0
         evidence_for_toxic= 0
         for observation in observations:
+            observation_to_use = observation
             if self.closed_world_assumption:
-                if not any([isinstance(observation_proposition, type(NightProposition())) for observation_proposition in observation.propositions[0][0]]) and not any([isinstance(observation_proposition, type(DayProposition())) for observation_proposition in observation.propositions[0][0]]):
-                    observation.propositions[0][0].append(NightProposition())
+                if not any([isinstance(observation_proposition, type(NightProposition())) for observation_proposition in observation_to_use.propositions[0][0]]) and not any([isinstance(observation_proposition, type(DayProposition())) for observation_proposition in observation_to_use.propositions[0][0]]):
+                    observation_to_use = copy.deepcopy(observation)
+                    observation_to_use.propositions[0][0].append(NightProposition())
             sentence_of_observation = None
             for sentence in available_sentences:
-                if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation.propositions[0][0])
-                 and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0]) 
+                if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation_to_use.propositions[0][0])
+                 and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation_to_use.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0]) 
                  and sentence.propositions[0][1] == Reward.nontoxic):
                     sentence_of_observation = sentence
             evidence_for_non_toxic = evidence_for_non_toxic + sentence_of_observation.evidence if sentence_of_observation is not None else evidence_for_non_toxic
             sentence_of_observation = None
             for sentence in available_sentences:
-                if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation.propositions[0][0]) 
-                 and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0])
+                if (all(any(isinstance(sentence_proposition, type(observation_proposition)) for sentence_proposition in sentence.propositions[0][0]) for observation_proposition in observation_to_use.propositions[0][0]) 
+                 and all(any(isinstance(observation_proposition, type(sentence_proposition)) for observation_proposition in observation_to_use.propositions[0][0]) for sentence_proposition in sentence.propositions[0][0])
                  and sentence.propositions[0][1] == Reward.toxic):
                     sentence_of_observation = sentence
             evidence_for_toxic = evidence_for_toxic + sentence_of_observation.evidence if sentence_of_observation is not None else evidence_for_toxic

@@ -2,6 +2,7 @@ from .propositions import *
 from .long_term_memory import LongTermMemory
 import math
 from numpy import log, power
+import copy
 
 
 class WorkingMemoryWithEvidence:
@@ -17,7 +18,7 @@ class WorkingMemoryWithEvidence:
         self.percentage_amount_for_retrieving = percentage_amount_for_retrieving
 
     def retrieve_knowledge(self, new_sentences: list, long_term_memory):
-        stored_sentences = long_term_memory.stored_sentences
+        stored_sentences = copy.deepcopy(long_term_memory.stored_sentences)
         if self.evidence_interpretation == EvidenceInterpretation.evidence.value or self.evidence_interpretation == EvidenceInterpretation.probability.value:
             stored_sentences.sort(key=lambda sentence: sentence.evidence, reverse=True)
         elif self.evidence_interpretation == EvidenceInterpretation.ranking.value:
@@ -51,7 +52,8 @@ class WorkingMemoryWithActivationSpreading:
         self.include_percentage_evidence_value = include_percentage_evidence_value
 
     def retrieve_knowledge(self, new_sentences: list, long_term_memory):
-        stored_sentences = long_term_memory.stored_sentences
+        #stored_sentences = long_term_memory.stored_sentences
+        stored_sentences = copy.deepcopy(long_term_memory.stored_sentences)
         actual_time_step = long_term_memory.get_time_since_initialization()
         self.init_activation_value_property(stored_sentences)
         if new_sentences:

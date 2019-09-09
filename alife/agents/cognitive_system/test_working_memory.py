@@ -4,7 +4,7 @@ from .working_memory import WorkingMemoryWithEvidence, WorkingMemoryWithActivati
 from .propositions import *
 
  
-class WorkingMemoryTest(TestCase):
+class WorkingMemoryTest():
  
 ########################### WORKING MEMORY ###########################################
 
