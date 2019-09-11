@@ -44,7 +44,6 @@ action_space = BugSpace(array([-pi/4., -5.]), array([pi/4.,10.]))
 # Load game constants
 
 import yaml
-yaml.warnings({'YAMLLoadWarning': False})
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
 
