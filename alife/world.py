@@ -13,7 +13,8 @@ import re
 
 from graphics import *
 from objects import *
-
+import os
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 # For saving and loading agents from disk
 import joblib, glob, time, datetime
 # For loading config
@@ -440,7 +441,6 @@ class World:
             # Routine
             for r in self.allSprites:
                 r.live(self)
-
             # Just for Game Results
             if test_run_name is not None:
                 if self.evidence_interpreation == 'EVIDENCE':
@@ -448,7 +448,7 @@ class World:
                         self.create_results(test_run_name, self.creatures, step)              
                         sys.exit()
                 else:
-                    if len(self.creatures) == 0 or step > 20000:
+                    if len(self.creatures) == 0 or step > 2000:
                         self.create_results(test_run_name, self.creatures, step)              
                         sys.exit()
 
