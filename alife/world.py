@@ -18,7 +18,6 @@ from objects import *
 import joblib, glob, time, datetime
 # For loading config
 import yaml
-yaml.warnings({'YAMLLoadWarning': False})
 def get_conf(filename='conf.yml',section='world'):
     return yaml.load(open(filename))[section]
 
