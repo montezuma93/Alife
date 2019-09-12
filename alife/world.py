@@ -143,7 +143,7 @@ class World:
         GRAPHICS_ON = True
         if test_run_name is not None:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
-            os.environ["SDL_AUDIODRIVER"] = "dummy"
+            os.environ["SDL_AUDIODRIVER"] = "disk"
             GRAPHICS_ON = False
 
         # Load the configuration
