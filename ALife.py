@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import os
 sys.path.append("alife")
 
 # Default map
@@ -32,6 +33,9 @@ if len(sys.argv) > 2:
         log_file['name'] = test_run_name + ".csv"
         with open(test_run_name+'.yml', "w") as file:
             yaml.dump(config_file, file)
+if len(sys.argv) > 2:
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 pygame.init()
 world = World(map_file,init_sprites,test_run_name, agent_string)
