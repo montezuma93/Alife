@@ -3,7 +3,6 @@ from .truths.truthtable import *
 from.propositions import *
 import sys
 import random
-from sympy import *
 
 class BeliefRevisionSystem:
 
