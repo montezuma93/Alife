@@ -8,7 +8,7 @@ class Agent(object):
 
     id_num = 0
 
-    def __init__(self, obs_space=None, act_space=None):
+    def __init__(self, obs_space=None, act_space=None,test_run_name= None):
         """
             Init.
 
