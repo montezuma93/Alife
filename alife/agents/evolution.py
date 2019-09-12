@@ -118,7 +118,7 @@ class CognitiveEnvolver(Agent):
         to make any progress.
     '''
 
-    def __init__(self, obs_space=None, act_space=None, H=0, **kwargs):
+    def __init__(self, obs_space=None, act_space=None, H=0,test_run_name=None, **kwargs):
         # Uniq ID (for visualization)
         self.id_num = str(choice(1000))+':'
         self.generation = 1
@@ -127,7 +127,7 @@ class CognitiveEnvolver(Agent):
         self.cognitive_system = Cognitive_System(kwargs.get("ObservationSystem"), kwargs.get("BeliefRevisionSystem"),
          kwargs.get("WorkingMemorySystem"), kwargs.get("DecisionMakingSystem"), kwargs.get("MentalMap"),
           kwargs.get("ObservationSystem_Args"), kwargs.get("BeliefRevisionSystem_Args"), kwargs.get("WorkingMemorySystem_Args"),
-           kwargs.get("DecisionMakingSystem_Args"), kwargs.get("CommunicationSystem_Args"), kwargs.get("yml_file"))
+           kwargs.get("DecisionMakingSystem_Args"), kwargs.get("CommunicationSystem_Args"), kwargs.get("yml_file"),test_run_name=test_run_name)
         
 
     def act(self, obs, nearby_objects, is_day_time, reward, world, pos, currentHealth, done=False):

@@ -207,7 +207,7 @@ class World:
         # Get a list of the agents we may deploy 
         agents = None
         if test_run_name is not None:
-            agents = get_conf(section='bugs', filename = test_run_name+'.yml').values()
+            agents = get_conf(section='bugs', filename = test_run_name.split('-')[0]+'.yml').values()
         else:
             agents = get_conf(section='bugs').values()
 
@@ -227,7 +227,7 @@ class World:
         self.create_things_and_creatures(cfg['max_plant_size'], agents)
         if test_run_name is not None:
             self.agents_amount = 10
-            self.create_agents(agents,  self.agents_amount, agent_string)
+            self.create_agents(agents,  self.agents_amount, agent_string, test_run_name)
             ### Write configuration to file
             f = open(test_run_name + ".txt","a")
             x = PrettyTable()
@@ -451,7 +451,9 @@ class World:
             if test_run_name is not None:
                 if self.evidence_interpreation == 'EVIDENCE':
                     if len(self.creatures) == 0 or step == 10000:
-                        self.create_results(test_run_name, self.creatures, step)              
+                        self.create_results(test_run_name, self.creatures, step) 
+                        os.remove("./"+test_run_name +".txt")
+                        os.remove("./"+test_run_name +".csv")               
                         sys.exit()
                 else:
                     if len(self.creatures) == 0:
@@ -459,11 +461,15 @@ class World:
                             self.create_results(test_run_name, self.creatures, step, False)
                         else:
                             self.create_results(test_run_name, self.creatures, step, True)
+                        os.remove("./"+test_run_name +".txt")
+                        os.remove("./"+test_run_name +".csv")     
                         sys.exit()
                     elif step == 10000:
                         self.create_results(test_run_name, self.creatures, step, True)
                     elif step == 20000:
-                        self.create_results(test_run_name, self.creatures, step, False)              
+                        self.create_results(test_run_name, self.creatures, step, False)    
+                        os.remove("./"+test_run_name +".txt")
+                        os.remove("./"+test_run_name +".csv")               
                         sys.exit()
 
             if GRAPHICS_ON:
@@ -545,10 +551,10 @@ class World:
         for r in self.allSprites:
             self.add_to_register(r)
         
-    def create_agents(self, agents, amount, agent_string):
+    def create_agents(self, agents, amount, agent_string, test_run_name):
         for i in range(amount):
             p = self.random_position()
-            Creature(p + random.randn()*(TILE_SIZE/2), dna = list(agents)[2], ID=4)
+            Creature(p + random.randn()*(TILE_SIZE/2), dna = list(agents)[2], ID=4, test_run_name=test_run_name)
         if agent_string is not None:
             if 'RANKING' in agent_string:
                 self.evidence_interpreation = 'RANKING'

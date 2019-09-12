@@ -15,15 +15,19 @@ class Cognitive_System():
 
     def __init__(self, observation_to_proposition_system: str, belief_revision_system: str, working_memory_system: str, decision_making_system: str,
          has_mental_map, observation_to_proposition_system_args, belief_revision_system_args, working_memory_system_args, decision_making_system_args,
-         communication_system_args, yml_file = 'conf.yml'):
+         communication_system_args, yml_file = 'conf.yml',test_run_name=None):
         conf_yml = 'conf.yml' if yml_file is None else yml_file
 
         self.log_file_name = None
-        with open(conf_yml) as file:
-            config_file = yaml.load(file)
-            log_file = config_file['log_file']
-            self.log_file_name = log_file['name']
-        file.close()
+        if test_run_name is None:
+            with open(conf_yml) as file:
+                config_file = yaml.load(file)
+                log_file = config_file['log_file']
+                self.log_file_name = log_file['name']
+            file.close()
+        else:
+            self.log_file_name = test_run_name + ".csv"
+
         
 
         if observation_to_proposition_system == "MultiplePropositionSystem":

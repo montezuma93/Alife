@@ -25,14 +25,13 @@ if len(sys.argv) > 1:
 
 if len(sys.argv) > 2:
     agent_string = sys.argv[2]
-    with open(test_run_name + '.yml') as file:
-        config_file = yaml.load(file)
-        bugs = config_file['bugs']
-        bugs[3] = sys.argv[2]
-        log_file = config_file['log_file']
-        log_file['name'] = test_run_name + ".csv"
-        with open(test_run_name+'.yml', "w") as file:
-            yaml.dump(config_file, file)
+    if test_run_name.split('-')[1] == 0:
+        with open(test_run_name.split('-')[0] + '.yml') as file:
+            config_file = yaml.load(file)
+            bugs = config_file['bugs']
+            bugs[3] = sys.argv[2]
+            with open(test_run_name.split('-')[0]+'.yml', "w") as file:
+                yaml.dump(config_file, file)
 if len(sys.argv) > 2:
     os.environ["SDL_VIDEODRIVER"] = "dummy"
     os.environ["SDL_AUDIODRIVER"] = "dummy"

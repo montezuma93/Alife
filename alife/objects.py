@@ -171,7 +171,7 @@ class Thing(pygame.sprite.DirtySprite):
         self.remove()
         self = None
 
-def spawn_agent(agent_def=None):
+def spawn_agent(agent_def=None, test_run_name = None):
     ''' 
         Spawn a new creature and give it an agent.
     '''
@@ -180,7 +180,7 @@ def spawn_agent(agent_def=None):
     Agent = getattr(importlib.import_module(mod_str), cls_str)
     kwargs = eval(arg_str)
     if len(kwargs) > 0:
-        return Agent(observ_space, action_space, **kwargs)
+        return Agent(observ_space, action_space,test_run_name=test_run_name, **kwargs)
     return Agent(observ_space, action_space)
 
 def get_plant_toxicity(plant, world):
@@ -215,7 +215,7 @@ class Creature(Thing):
         A Creature: Something that moves (i.e., an agent).
     '''
 
-    def __init__(self,pos,dna=None,energy=500.0,ID=ID_ANIMAL, yml_file= None):
+    def __init__(self,pos,dna=None,energy=500.0,ID=ID_ANIMAL, yml_file= None, test_run_name = None):
         pygame.sprite.Sprite.__init__(self, self.containers)
         Thing.__init__(self, pos, mass = energy, ID = ID)
         self.images = build_image_bank(self.image)   # this is a moving sprite; load images for each angle
@@ -232,7 +232,7 @@ class Creature(Thing):
         self._energy = self.energy
         # DNA (the agent)
         if isinstance(dna, str):
-            self.brain = spawn_agent(dna)
+            self.brain = spawn_agent(dna, test_run_name)
         elif dna is None:
             print("Error: No Agent definition given.")
             exit(1)
