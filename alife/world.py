@@ -142,8 +142,8 @@ class World:
     def __init__(self,fname=None,init_sprites=0, test_run_name = None, agent_string = None):
         GRAPHICS_ON = True
         if test_run_name is not None:
-            os.environ["SDL_VIDEODRIVER"] = "dsp"
-            os.environ["SDL_AUDIODRIVER"] = "disk"
+            os.environ["SDL_VIDEODRIVER"] = "dummy"
+            os.environ["SDL_AUDIODRIVER"] = "dummy"
             GRAPHICS_ON = False
 
         # Load the configuration
