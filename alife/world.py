@@ -450,12 +450,20 @@ class World:
             # Just for Game Results
             if test_run_name is not None:
                 if self.evidence_interpreation == 'EVIDENCE':
-                    if len(self.creatures) == 0 or step > 10000:
+                    if len(self.creatures) == 0 or step == 10000:
                         self.create_results(test_run_name, self.creatures, step)              
                         sys.exit()
                 else:
-                    if len(self.creatures) == 0 or step > 20000:
-                        self.create_results(test_run_name, self.creatures, step)              
+                    if len(self.creatures) == 0:
+                        if step > 10000:
+                            self.create_results(test_run_name, self.creatures, step, False)
+                        else:
+                            self.create_results(test_run_name, self.creatures, step, True)
+                        sys.exit()
+                    elif step == 10000:
+                        self.create_results(test_run_name, self.creatures, step, True)
+                    elif step == 20000:
+                        self.create_results(test_run_name, self.creatures, step, False)              
                         sys.exit()
 
             if GRAPHICS_ON:
@@ -825,7 +833,7 @@ class World:
 
 
     
-    def create_results(self, test_run_name, creatures, step):
+    def create_results(self, test_run_name, creatures, step, is_mid_result = None):
         # Game Over -> Get Results
         with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore") as scraped:
             reader = csv.reader(scraped, delimiter=';')
@@ -864,7 +872,9 @@ class World:
                     if row:  # avoid blank lines
                         last_row = row[0]
             scraped.close
-        next_run = str(int(last_row) + 1)
+        next_run = last_row
+        if is_mid_result is None or is_mid_result is True:
+            next_run = str(int(last_row) + 1)
         row_to_append = []
         average_precission_X = 0
         average_precission_notX = 0
