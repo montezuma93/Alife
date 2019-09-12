@@ -19,7 +19,7 @@ objects:
   toxic_damage: 1
 world:
   factor: 2
-  fps: 100
+  fps: 1000
   growth_rate:
     ID_3: 0
     ID_31: 0

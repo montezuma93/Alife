@@ -143,6 +143,7 @@ class World:
         GRAPHICS_ON = True
         if test_run_name is not None:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
+            os.environ["SDL_AUDIODRIVER"] = "dummy"
             GRAPHICS_ON = False
 
         # Load the configuration
@@ -416,8 +417,8 @@ class World:
                     Thing(array(pygame.mouse.get_pos()), mass=100+random.rand()*cfg['max_plant_size'], ID=self.PLANT_TO_USE)
                     print("New Plant")
                     timer = 0
-
-            dt = clock.tick(60) /1000
+            if GRAPHICS_ON:
+                dt = clock.tick(60) /1000
             # Make sure there is a constant flow of resources/energy into the system
             step = step + 1
 
