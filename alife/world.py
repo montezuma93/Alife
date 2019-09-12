@@ -14,7 +14,8 @@ import re
 from graphics import *
 from objects import *
 import os
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+
 # For saving and loading agents from disk
 import joblib, glob, time, datetime
 # For loading config
@@ -139,6 +140,10 @@ class World:
     """
 
     def __init__(self,fname=None,init_sprites=0, test_run_name = None, agent_string = None):
+        GRAPHICS_ON = True
+        if test_run_name is not None:
+            os.environ["SDL_VIDEODRIVER"] = "dummy"
+            GRAPHICS_ON = False
 
         # Load the configuration
         cfg = get_conf(section='world')
@@ -282,7 +287,7 @@ class World:
 
         ## MAIN LOOP ##
         sel_obj = None 
-        GRAPHICS_ON = True
+
         GRID_ON = False
         self.FPS = FPS
         clock = pygame.time.Clock()
@@ -448,7 +453,7 @@ class World:
                         self.create_results(test_run_name, self.creatures, step)              
                         sys.exit()
                 else:
-                    if len(self.creatures) == 0 or step > 2000:
+                    if len(self.creatures) == 0 or step > 20000:
                         self.create_results(test_run_name, self.creatures, step)              
                         sys.exit()
 
