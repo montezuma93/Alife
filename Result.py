@@ -2,12 +2,10 @@ import csv
 import os
 
 for config in range(10):
-    for result in range(5):
+    for result in range(20):
         file_to_check = './Config'+str(config)+'-'+str(result)+'-results.csv'
-        print(file_to_check)
         if os.path.isfile(file_to_check):
             if result > 0:
-                print("here")
                 rows_to_append = []
                 with open(file_to_check, "r", encoding="utf-8", errors="ignore") as scraped:
                     reader = csv.reader(scraped, delimiter=';')
