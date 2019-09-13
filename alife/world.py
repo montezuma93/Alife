@@ -842,7 +842,7 @@ class World:
     
     def create_results(self, test_run_name, creatures, step, is_mid_result = None):
         # Game Over -> Get Results
-        with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore", quoting=csv.QUOTE_NONE) as scraped:
+        with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore") as scraped:
             reader = csv.reader(scraped, delimiter=';')
             agents = {}
             for row in reader:
