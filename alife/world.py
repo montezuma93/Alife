@@ -140,6 +140,7 @@ class World:
     """
 
     def __init__(self,fname=None,init_sprites=0, test_run_name = None, agent_string = None):
+        csv.field_size_limit(431072)
         GRAPHICS_ON = True
         if test_run_name is not None:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -841,7 +842,7 @@ class World:
     
     def create_results(self, test_run_name, creatures, step, is_mid_result = None):
         # Game Over -> Get Results
-        with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore") as scraped:
+        with open(test_run_name + '.csv', "r", encoding="utf-8", errors="ignore", quoting=csv.QUOTE_NONE) as scraped:
             reader = csv.reader(scraped, delimiter=';')
             agents = {}
             for row in reader:
