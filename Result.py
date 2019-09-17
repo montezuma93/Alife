@@ -1,7 +1,7 @@
 import csv
 import os
 
-for config in range(100):
+for config in range(200):
     for result in range(1010):
         file_to_check = './Config'+str(config)+'-'+str(result)+'-results.csv'
         if os.path.isfile(file_to_check):
