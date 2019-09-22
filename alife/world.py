@@ -467,9 +467,9 @@ class World:
                         sys.exit()
                     elif step == 10000:
                         self.create_results(test_run_name, self.creatures, step, True)
+                    #elif step == 20000:
+                        #self.create_results(test_run_name, self.creatures, step, True)
                     elif step == 20000:
-                        self.create_results(test_run_name, self.creatures, step, True)
-                    elif step == 40000:
                         self.create_results(test_run_name, self.creatures, step, False)    
                         os.remove("./"+test_run_name +".txt")
                         os.remove("./"+test_run_name +".csv")               
