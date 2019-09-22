@@ -8,7 +8,7 @@ import math
 class DecisionMakingSystemTest(TestCase):
 
 ####################################### HUMAN LIKE DECISION MAKING UNDER UNCERTAINTY SYSTEM  ##############################
-    '''
+    
     def test_make_decision_decision_evidence(self):
         self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0, EvidenceInterpretation.evidence.value, False, False, 10, 10])
 
@@ -33,7 +33,7 @@ class DecisionMakingSystemTest(TestCase):
         action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3])
         self.assertEqual(Action.explore, action)
 
-    '''
+    
     def test_make_decision_decision_ranking(self):
         self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([1, 0,  EvidenceInterpretation.ranking.value, True, False, 10, 10])
 
@@ -45,7 +45,7 @@ class DecisionMakingSystemTest(TestCase):
 
         action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3], Health.lessThanHalf)
         self.assertEqual(Action.explore, action)
-    '''
+
     def test_make_decision_decision_ranking(self):
         self.decision_making_system = HumanLikeDecisionMakingUnderUncertaintySystem([0.5, 0.5,  EvidenceInterpretation.ranking.value, False, True, 5, 10, 25, 50, 50,25,10,5])
 
@@ -89,7 +89,7 @@ class DecisionMakingSystemTest(TestCase):
 
         action = self.decision_making_system.make_decision(observations, [sentence_1, sentence_2, sentence_3], Health.moreThanHalf)
         self.assertEqual(Action.eat, action)
-        '''
+
 
 ####################################### Q LEARNING SYSTEM  ##############################
     def test_create_key(self):

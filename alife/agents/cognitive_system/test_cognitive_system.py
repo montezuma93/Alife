@@ -5,50 +5,9 @@ from .action import *
 from .truths.truthtable import *
 from ..evolution import *
 
-class CognitiveSystemTest():
-
-    def test_first_sentence_single_proposition_system(self):
-
-        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','MentalMap':'True','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['EVIDENCE'], 'DecisionMakingSystem_Args':[]}")
-        self.agent = CognitiveEnvolver(None, None, 0, **kwargs)
-
-        # Observation without reward
-        self.agent.cognitive_system.act(self.agent, ColorGreen(), [DayProposition(), NextToRock()], Reward.none)
-        # Observation with reward
-        self.agent.cognitive_system.act(self.agent, ColorGreen(), [DayProposition(), NextToRock()], Reward.toxic)
-
-        # Now observation with reward should be stored in agents belief base
-        self.assertEqual(1, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
-        self.assertEqual(1, len(self.agent.cognitive_system.long_term_memory.stored_sentences[0].propositions))
-        self.assertEqual(1, self.agent.cognitive_system.long_term_memory.stored_sentences[0].evidence)
-        self.assertEqual(3, len(self.agent.cognitive_system.long_term_memory.stored_sentences[0].propositions[0][0]))
-        # Q Table should have two states, with reward from observation to reward state
-        self.assertEqual(2, len(self.agent.cognitive_system.decision_making_system.q_table.keys()))
-
-        # Another observation with reward
-        self.agent.cognitive_system.act(self.agent, ColorGreen(), [DayProposition(), NextToRock()], Reward.toxic)
-        # Belief base should stay the same, evidence should be increased
-        self.assertEqual(1, len(self.agent.cognitive_system.long_term_memory.stored_sentences[0].propositions))
-        self.assertEqual(2, self.agent.cognitive_system.long_term_memory.stored_sentences[0].evidence)
-        # Q Table should have same size
-        self.assertEqual(2, len(self.agent.cognitive_system.decision_making_system.q_table.keys()))
-
-        # Different Observation without reward, belief base should not be adjusted
-        self.agent.cognitive_system.act(self.agent, ColorOrange(), [NightProposition(), NextToRock()], Reward.none)
-
-        # Different Observation with reward
-        self.agent.cognitive_system.act(self.agent, ColorOrange(), [NightProposition(), NextToRock()], Reward.nontoxic)
-        # Belief Base should be adjusted
-        self.assertEqual(3, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
-
-        # Another Different Observation with reward
-        self.agent.cognitive_system.act(self.agent, ColorGreen(), [NightProposition(), NextToRock()], Reward.nontoxic)
-
-        # Belief Base should be adjusted once again
-        self.assertEqual(7, len(self.agent.cognitive_system.long_term_memory.stored_sentences))
-
+class CognitiveSystemTest(TestCase):
     def test_communcation(self):
-        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','MentalMap':'True','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['EVIDENCE'], 'DecisionMakingSystem_Args':[]}")
+        kwargs = eval("{'ObservationSystem':'SinglePropositionSystem','BeliefRevisionSystem':'FormalBeliefRevision', 'WorkingMemorySystem':'WorkingMemoryWithActivationSpreading', 'DecisionMakingSystem':'QLearningDecisionMakingSystem','MentalMap':'True','ObservationSystem_Args':[],'BeliefRevisionSystem_Args':['True'], 'WorkingMemorySystem_Args':['EVIDENCE', 10], 'DecisionMakingSystem_Args':[10,10,1,1,0.9,0.1,0.9], 'CommunicationSystem_Args':['True', 50, 'EVIDENCE']}")
         self.agent = CognitiveEnvolver(None, None, 0, **kwargs)
         self.other_agent = CognitiveEnvolver(None, None, 0, **kwargs)
 

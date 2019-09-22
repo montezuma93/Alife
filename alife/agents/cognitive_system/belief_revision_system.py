@@ -500,17 +500,3 @@ class ConditionalBeliefRevision(BeliefRevisionSystem):
                     sentences.append(Sentence([(sentence_propositions, Reward.toxic)], ranking))
         return sentences
             
-
-# Belief Revision with Explanations
-# See: Explanations, belief revision and defeasible reasoning
-class KernelBeliefRevision(BeliefRevisionSystem):
-    
-    def __init__(self):
-        pass
-
-# Try https://github.com/opennars/Narjure
-class NARSBeliefRevision(BeliefRevisionSystem):
-    
-    def __init__(self):
-        pass
- 

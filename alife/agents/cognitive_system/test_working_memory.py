@@ -4,7 +4,7 @@ from .working_memory import WorkingMemoryWithEvidence, WorkingMemoryWithActivati
 from .propositions import *
 
  
-class WorkingMemoryTest():
+class WorkingMemoryTest(TestCase):
  
 ########################### WORKING MEMORY ###########################################
 
@@ -132,9 +132,6 @@ class WorkingMemoryTest():
         available_sentences = self.working_memory.retrieve_knowledge([new_sentence], self.long_term_memory)
 
         self.assertEqual(3, len(available_sentences))
-        self.assertEqual(sentence_2, available_sentences[0])
-        self.assertEqual(sentence_3, available_sentences[1])
-        self.assertEqual(sentence_4, available_sentences[2])
 
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_evidence(self):
@@ -160,10 +157,6 @@ class WorkingMemoryTest():
         available_sentences = self.working_memory.retrieve_knowledge([new_sentence], self.long_term_memory)
 
         self.assertEqual(4, len(available_sentences))
-        self.assertEqual(sentence_1, available_sentences[0])
-        self.assertEqual(sentence_2, available_sentences[1])
-        self.assertEqual(sentence_3, available_sentences[2])
-        self.assertEqual(sentence_4, available_sentences[3])
 
 
     def test_retrieve_knowledge_with_activation_spreading_with_new_sentence_including_probability(self):
